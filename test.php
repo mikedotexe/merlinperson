@@ -1,9 +1,13 @@
     <?php
-	echo 'test';
+	if (class_exists('HttpRequest'){
+	echo 'does exist';
+	} else {
+	echo 'does not exist';
+	}
     /**
      * Some very basic php that demonstrates how to make an access token request
      * on behalf of a LearningStudio user via the OAuth 2.0 Password grant type
-     */
+     
  
     // Setup the variables necessary to make the Request 
     $grantType = "password";
@@ -51,5 +55,6 @@
     } catch (HttpException $e) {
       echo $e->getMessage();
     }
+	*/
  
     ?>
