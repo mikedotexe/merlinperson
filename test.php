@@ -6,7 +6,7 @@
 	}
 	
 //$service_url = 'http://www.mikedotexe.com/index.php/app/plants';
-
+// SENSITIVE
 $curl = curl_init($service_url);
 curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
 $curl_response = curl_exec($curl);
