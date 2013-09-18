@@ -1,0 +1,7 @@
+; $Id$
+name = Pearson Purvis Submission
+description = A custom module designed to use WSOD from the Pearson APIs
+version = "7.x-1.00-dev"
+core = "7.x"
+project = "pearson"
+package = "pearson"

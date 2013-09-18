@@ -1,0 +1,82 @@
+<?php
+// hook_menu
+function pearson_mp_menu(){
+	$items = array();
+	$items['mp/test'] = array(
+		'type' => MENU_NORMAL_ITEM,		
+		'title' => 'mp test',		
+		'description' => 'test for ReST',		
+		'page callback' => '_debug_mp',
+		'page arguments' => array('hardcoded'),
+		'access callback' => TRUE,
+		'expanded' => TRUE,
+  );
+  
+  $items['mp/test/prof'] = array(
+    'title' => 'Prof form',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('_mpProf'),
+    'access callback' => TRUE,
+    'description' => 'we want to find details about this professor',
+    'type' => MENU_NORMAL_ITEM,
+  );
+    
+  return $items;
+}
+
+function pearson_mp_cron(){
+	dsm('ran cron');
+}
+
+function _debug_mp($arg = NULL){
+	return '<h1>here and also</h1> some ' . $arg . ' the end';
+}
+
+function _mpProf($form, &$form_state) {
+  $prof_id = arg(3); //(empty(arg(3))) ? '' : arg(3);
+  dsm($prof_id, 'prof_id');
+  
+  $form['description'] = array(
+    '#type' => 'item',
+    '#title' => t('Enter the Name and ID of a Professor'),
+  );
+  // This is the first form element. It's a textfield with a label, "Name"
+  $form['name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Name'),
+  );
+  // _mpcurl(19, 'professor');
+  _mpcurl();
+  return $form;
+}
+
+function _mpcurl($id = NULL, $type = NULL){
+	$apikey = get_api_key();
+	dsm($apikey, 'API Key');
+	
+	if (isset($id)) dsm($id, 'id');	
+	if (isset($type)) dsm($type, 'type');
+	
+	$curl_handle = curl_init();  
+	curl_setopt_array($curl_handle, array(
+		CURLOPT_URL => 'http://www.mikedotexe.com/index.php/app/plants',
+	    CURLOPT_RETURNTRANSFER => 1,
+	    CURLOPT_POST => 0,
+	));
+
+	
+	// Optional, delete this line if your API is open  
+	// curl_setopt($curl_handle, CURLOPT_USERPWD, $username . ':' . $password);  	
+	
+	$buffer = curl_exec($curl_handle);  
+	curl_close($curl_handle);  
+	  
+	$result = json_decode($buffer);  
+	dsm($result, 'result');
+	return $result;
+}
+
+function get_api_key(){
+	include('mykey.php');
+	return $apikey;
+}
