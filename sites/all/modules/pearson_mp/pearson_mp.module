@@ -25,7 +25,7 @@ function pearson_mp_menu(){
 }
 
 function pearson_mp_cron(){
-	dsm('ran cron');
+	drupal_set_message('ran cron purvis');
 }
 
 function _debug_mp($arg = NULL){
