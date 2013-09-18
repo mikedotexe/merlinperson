@@ -17,6 +17,7 @@
 	try{	
 		$request = new HttpRequest($url, HttpRequest::METH_POST);    
 		$request->setContentType("application/x-www-form-urlencoded");
+		echo 'went through okay';
 	} catch (Exception $e) {
 		echo 'Caught exception: ',  $e->getMessage(), "\n";
 	}
