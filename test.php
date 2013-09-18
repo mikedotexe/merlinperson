@@ -3,7 +3,7 @@
     /**
      * Some very basic php that demonstrates how to make an access token request
      * on behalf of a LearningStudio user via the OAuth 2.0 Password grant type
-     
+     */
  
     // Setup the variables necessary to make the Request 
     $grantType = "password";
@@ -14,8 +14,12 @@
     $url = "https://m-api.ecollege.com/token";
  
     // Setup the Request
-    $request = new HttpRequest($url, HttpRequest::METH_POST);    
-    $request->setContentType("application/x-www-form-urlencoded");
+	try{	
+		$request = new HttpRequest($url, HttpRequest::METH_POST);    
+		$request->setContentType("application/x-www-form-urlencoded");
+	} catch (Exception $e) {
+		echo 'Caught exception: ',  $e->getMessage(), "\n";
+	}
  
     // Add the data to send
     $request->addPostFields(array("grant_type" => $grantType,
@@ -46,5 +50,5 @@
     } catch (HttpException $e) {
       echo $e->getMessage();
     }
- */
+ 
     ?>
