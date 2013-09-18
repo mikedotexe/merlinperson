@@ -1,15 +1,39 @@
     <?php
-	if (class_exists('HttpRequest')){
+	if (class_exists('SimpleXMLElement')){
 	echo 'does exist';
 	} else {
 	echo 'does not exist';
 	}
+	echo '<br/>';
+
+	$service_url = 'https://m-api.ecollege.com/token';
+	$curl = curl_init($service_url);
+	$curl_post_data = array(
+		"user_id" => 42,
+		"emailaddress" => 'lorna@example.com',
+		);
+	curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+	curl_setopt($curl, CURLOPT_POST, true);
+	curl_setopt($curl, CURLOPT_POSTFIELDS, $curl_post_data);
+	$curl_response = curl_exec($curl);
+	curl_close($curl);
+
+	$xml = new SimpleXMLElement($curl_response);	
 	
 //$service_url = 'http://www.mikedotexe.com/index.php/app/plants';
+/*
 $service_url = 'https://m-api.ecollege.com/token?grant_type=password&client_id=' . $_GET['client_id'] . '&username=' . $_GET['client_string'] . '%5C' . $_GET['username'] . '&password=' . $_GET['password'];
 echo 'service url is ' . $service_url . '<br/><br/>';
 $curl = curl_init($service_url);
 curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($curl, CURLOPT_CERTINFO, true);
+curl_setopt($curl,CURLOPT_HTTPHEADER,array (
+        "Content-Type: application/x-www-form-urlencoded",
+		"Host: m-api.ecollege.com",
+		"Content-Length: 116",
+        "Expect: 100-continue",
+		"Connection: Keep-Alive"
+    ));
 $curl_response = curl_exec($curl);
 if ($curl_response === false) {
     $info = curl_getinfo($curl);
@@ -23,6 +47,8 @@ if (isset($decoded->response->status) && $decoded->response->status == 'ERROR') 
 }
 echo 'response ok!<br/><br/>';
 var_dump($decoded);	
+*/
+
     /**
      * Some very basic php that demonstrates how to make an access token request
      * on behalf of a LearningStudio user via the OAuth 2.0 Password grant type
