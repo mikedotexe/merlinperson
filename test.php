@@ -6,7 +6,8 @@
 	}
 	
 //$service_url = 'http://www.mikedotexe.com/index.php/app/plants';
-// SENSITIVE
+$service_url = 'https://m-api.ecollege.com/token?grant_type=password&client_id=' . $_GET['client_id'] . '&username=' . $_GET['client_string'] . '%5C' . $_GET['username'] . '&password=' . $_GET['password'];
+echo 'service url is ' . $service_url . '<br/><br/>';
 $curl = curl_init($service_url);
 curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
 $curl_response = curl_exec($curl);
