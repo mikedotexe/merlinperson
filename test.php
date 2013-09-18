@@ -1,5 +1,5 @@
     <?php
-	if (class_exists('HttpRequest'){
+	if (class_exists('HttpRequest')){
 	echo 'does exist';
 	} else {
 	echo 'does not exist';
