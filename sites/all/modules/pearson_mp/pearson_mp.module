@@ -1,4 +1,5 @@
 <?php
+require_once 'sites/all/libraries/CryptLib/bootstrap.php'; // for doing encryption
 // hook_menu
 function pearson_mp_menu(){
 	$items = array();
@@ -20,22 +21,190 @@ function pearson_mp_menu(){
     'description' => 'we want to find details about this professor',
     'type' => MENU_NORMAL_ITEM,
   );
+  
+  $items['admin/settings/pearson_mp'] = array(
+    'title' => 'Pearson Settings',
+    'description' => 'Change/view Application ID, Client String, etc.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('_pearson_settings'),
+    'access arguments' => array('administer pearson settings'),
+    'type' => MENU_NORMAL_ITEM,
+   );    
     
   return $items;
 }
 
+function _pearson_settings() {
+  $form = array();
+
+  $form['pearson_app_id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Pearson Application ID'),
+    '#default_value' => variable_get('pearson_app_id'),
+    '#description' => t("Used for all clients."),
+    '#required' => TRUE,
+  );
+  $form['pearson_client_string'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Pearson Client String'),
+    '#default_value' => variable_get('pearson_client_string'),
+    '#description' => t("Unique for Integration Campus."),
+    '#required' => TRUE,
+  );
+  $form['pearson_term_id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Enter current Term ID'),
+    '#default_value' => variable_get('pearson_term_id'),
+    '#required' => TRUE,
+  );
+  $form['pearson_consumer_key'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Enter Consumer Key (AKA: Token Key Moniker)'),
+    '#default_value' => variable_get('pearson_consumer_key'),
+    '#required' => TRUE,
+  );
+  $form['pearson_consumer_secret'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Enter Consumer Secret (AKA: Shared Secret)'),
+    '#default_value' => variable_get('pearson_consumer_secret'),
+    '#required' => TRUE,
+  );
+
+  return system_settings_form($form);
+}
+
+function pearson_mp_permission() {
+  return array(
+    'administer pearson settings' => array(
+      'title' => t('Access and change Pearson settings'),
+      'description' => t('Allow users to access the settings page, change Application ID, etc...'),
+    ));
+}
 // hook cron
 function pearson_mp_cron(){
 	drupal_set_message('ran cron purvis');
     $queue = DrupalQueue::get("pearsonSync");
-	
-    foreach (remotePearson() as $data) {
+	$remoteAll = remoteOAuth1(); //remotePearson();
+	dsm($remoteAll, 'remoteOAuth1');
+	var_dump($remoteAll, 'remoteOAuth1');
+	/*
+	$remoteProf = $remoteAll['prof'];
+    foreach ($remoteProf as $data) {
       $queue->createItem($data);
-    }	
+    }
+	 */	
+}
+
+function remoteOAuth1(){
+	// Set up the variables necessary to make the Request 
+	$method          = 'GET'; 
+	$application_id  = variable_get('pearson_app_id');  //Your Application's ID/Key. Use for all campuses.
+	$consumer_key    = variable_get('pearson_consumer_key');    //Campus-specific 
+	$consumer_secret = variable_get('pearson_consumer_secret'); //Campus-specific  
+	$nonce           = md5(microtime());   //Random & unique for every call
+	$api_route       = '/terms/' . variable_get('pearson_term_id') . '/courses';            //The API call you're requesting
+	$post_body       = '{requestBody}';    //POST or PUT body
+	$request_url     = 'https://m-api.ecollege.com'.$api_route;  
+	 
+	 
+	// Define OAuth Parameters
+	$oAuthVariables = array(); 
+	$oAuthVariables['application_id'] = $application_id; 
+	$oAuthVariables['oauth_consumer_key'] = $consumer_key; 
+	$oAuthVariables['oauth_nonce'] = $nonce; 
+	$oAuthVariables['oauth_signature_method'] = 'CMAC-AES';
+	$oAuthVariables['oauth_timestamp'] = time();
+	 
+	 
+	// Create a Signable String
+	// If this is a POST or PUT we tack on the body as a parameter 
+	// *only* for the signable string. The body is base64 encoded, and then 
+	// url-encoded TWICE. 
+	$signable_string = $method.'&'.urlencode($api_route).'&'; 
+	 
+	$StringParts = $oAuthVariables; 
+	if($method=='POST' || $method=='PUT')                               
+		$StringParts['body'] = urlencode(urlencode(base64_encode($post_body))); 
+	 
+	ksort($StringParts); 
+	 
+	$encodable = array(); 
+	 
+	foreach($StringParts as $key=>$value){ 
+		$encodable[] = $key.'='.$value; 
+	} 
+	 
+	$signable_string.=urlencode(implode('&',$encodable)); 
+	 
+	 
+	// Get a Signature for the string. Signature is an AES-CMAC hash.
+	$CMACEngine = new CryptLib\MAC\Implementation\CMAC;
+	 
+	$packed_string = ''; 
+	$stringlength = strlen($signable_string); 
+	for($i=0; $i<$stringlength; $i++) { 
+	    $packed_string .= pack("c", ord(substr($signable_string, $i, 1))); 
+	} 		
+	 
+	$binary_cmac = $CMACEngine->generate($packed_string,$consumer_secret); 
+	$signature = base64_encode($binary_cmac);
+	 
+	 
+	// Create the OAuth HTTP Header 
+	$header_vars = array('realm'=>$request_url); 
+	$header_vars = array_merge($header_vars,$oAuthVariables); 
+	$header_vars['oauth_signature'] = $signature; 
+	 
+	$header_parts = array(); 
+	foreach($header_vars as $k=>$v){ 
+		$v = ($k=='realm')?$v:urlencode($v); 
+		$header_parts[] = $k.'="'.$v.'"'; 
+	} 
+	 
+	$oauth_http_header = "X-Authorization: OAuth ".implode(',',$header_parts);
+	 	 
+	// Use cURL to make the request 
+	$ch = curl_init();
+	curl_setopt($ch, CURLOPT_URL, $request_url);
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+	curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
+	curl_setopt($ch, CURLOPT_HTTPHEADER, array($oauth_http_header)); 
+	if($method=='POST' || $method=='PUT')
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $post_body);
+	 	 
+	// Execute & get variables
+	$api_response = curl_exec($ch);
+	$curlError = curl_error($ch);
+	$info = curl_getinfo($ch); 
+	$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+	 
+	// Test if there was a cURL problem (request didn't go through)
+	if($curlError){
+	 
+		 dsm($curlError, "There was a problem making the API Call. cURL problem"); 
+	 
+	// Test if there is a 4XX error (request went through but erred). 
+	} else if(intval($http_code / 100) >=4){
+	 
+		$decoded = json_decode($api_response); 
+		$msg = (is_object($decoded) && isset($decoded->error->message))?$decoded->error->message:"No message reported.";
+		$msg.= " Error ID: "; 
+		$msg.= (is_object($decoded) && isset($decoded->error->errorId) && !empty($decoded->error->errorId))?$decoded->error->errorId:'None provided';  
+	 
+		dsm($msg, "The API Server responded with ".$http_code.". Message was:"); 
+	 
+	// Else you have a successful response. 
+	} else {
+	 
+		$decoded_response = json_decode($api_response); 
+		dsm($decoded_response);  
+		return $decoded_response;
+	}	
 }
 
 // tell drupal we have a queue to work on during cron
-function mymodule_cron_queue_info() {
+function pearson_mp_cron_queue_info() {
   $queues = array();
   $queues['pearsonSync'] = array(
     'worker callback' => 'PearsonUpdateOrAdd', //function to call for each item
@@ -45,32 +214,84 @@ function mymodule_cron_queue_info() {
 }
 
 // this will actually update a node or create new ones
-function PearsonUpdateOrAdd(){
+function PearsonUpdateOrAdd($item){
+	// This essentially has each item that looks like what is returned from 
+	//dsm($item, 'item in the actual worker function');
+	
+  
+
+	
+		
+	$newNode = (object) NULL;
+	$newNode->type = 'pearson_course';
+	$newNode->uid = 1;
+	$newNode->created = strtotime("now");
+	$newNode->changed = strtotime("now");
+	$newNode->status = 1;
+	$newNode->comment = 0;
+	$newNode->promote = 0;
+	$newNode->moderate = 0;
+	$newNode->sticky = 0;
+	$newNode->language = 'und';
+	$newNode->title = "test";
+	$newNode->field_pearson_course_number[LANGUAGE_NONE][0]['value'] = $item['email'];
+	node_save($newNode);
 	
 }
 
+function getCourseInformation($access_token){
+	
+}
+
+function pearson_mp_form_alter(&$form, &$form_state, $form_id){
+	// dsm($form, 'form');
+	dsm($form_id, 'form_id');
+	// dsm($form, 'form');
+} 
 
 // this fetches the information from Pearson WSOD
 function remotePearson(){
 	$ret = array();
 	// get list of professor id's that are tagged with "include me in cron"
 	//		prof => id
-	$query = db_select('node', 'n');
-	$query->join('field_data_field_pearson_include_cron', 'b', 'n.nid = b.entity_id');
+	$query = db_select('users', 'n');
+	$query->join('field_data_field_pearson_include_cron', 'b', 'n.uid = b.entity_id');
+	$query->join('users_roles', 'c', 'n.uid = c.uid');
+	$query->join('role', 'r', 'c.rid = r.rid');
 	$query
-	  ->fields('n', array('nid', 'title'))
-	  ->condition('n.type', 'pearson_prof')
-	  ->condition('n.status', '1')
-	->condition('b.field_pearson_include_cron_value', 1);
+	  ->fields('n', array('uid', 'mail'))
+	  ->condition('b.field_pearson_include_cron_value', 1)
+	  ->condition('r.name', 'prof');
 	$result = $query->execute()->fetchAll();
 	foreach ($result as $key => $value) {
-		$ret['prof'][] = $value->title;
+		// $ret['prof'][$value->uid] = $value->mail;
+		$ret['prof'][] = array('uid' => $value->uid, 'email' => $value->mail);		
 	}
 	//dsm($result, 'result');		
 	dsm($ret, 'return value');
 	return $ret;
 }
 
+// code to create a course node programmatically
+/* 
+
+$newNode = (object) NULL;
+$newNode->type = 'pearson_course';
+$newNode->uid = 1;
+$newNode->created = strtotime("now");
+$newNode->changed = strtotime("now");
+$newNode->status = 1;
+$newNode->comment = 0;
+$newNode->promote = 0;
+$newNode->moderate = 0;
+$newNode->sticky = 0;
+$newNode->language = 'und';
+$newNode->title = "test";
+$newNode->field_pearson_course_number[LANGUAGE_NONE][0]['value'] = "this###";
+node_save($newNode);
+ 
+ */
+//----------------------------------
 /*
 	$ret = array();
 	// get list of professor id's that are tagged with "include me in cron"
@@ -91,61 +312,73 @@ $query->leftJoin('field_data_field_pearson_prof_courses', 'c', 'n.nid = c.entity
 	dsm($result, 'result');		
 	dsm($ret, 'return value');
  */
-
+//---------------------------------------------------
 // curl stuff
 /*
-$application_id 	= '5d290fc1-cb0e-4684-bb73-2ec9a3a72f30'; 
-$client_string 		= 'gbtestc'; 
-$username 			= 'purvisteacher'; 
-$password 			= 'letmein'; 
- 
- 
- 
-$post_request = 'grant_type=password'
-				.'&client_id='.$application_id
-	   			.'&username='.$client_string.'\\'.$username
-	   			.'&password='.$password; 
- 
- 
-$ch = curl_init();
-curl_setopt($ch, CURLOPT_URL, 'https://m-api.ecollege.com/token');
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-//curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
-curl_setopt($ch, CURLOPT_POST, 1);
 
-curl_setopt($ch, CURLOPT_POSTFIELDS, $post_request);
- 
-// This next opton bypasses some SSL stuff that often trips up 
-// local development environments' curl. Shouldn't be needed/used in production
-curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0); 
- 
- 
-$api_response = curl_exec($ch); 
- 
-$curlError = curl_error($ch);
- 
-$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
- 
-if($curlError){
- 
-	 dsm($curlError, "There was a problem making the API Call. cURL problem"); 
- 
-} else if(intval($http_code / 100) >=4){
- 
-	$decoded = json_decode($api_response); 
-	$msg = (is_object($decoded) && isset($decoded->error->message))?$decoded->error->message:"No message reported."; 
-	$msg.= " Error ID: "; 
-	$msg.= (is_object($decoded) && isset($decoded->error->errorId) && !empty($decoded->error->errorId))?$decoded->error->errorId:'None provided';  
-	dsm($http_code, "The API Server responded with http_code");
-	dsm($msg, "Message"); 
- 
-} else {
- 
-	$decoded_response = json_decode($api_response); 
-	dsm($decoded_response); 
- 
-}
- */
+	// in this case we have the uid and the email of the professor
+	// let's get the token based on his/her username and password
+	$ret = array();
+	// get list of professor id's that are tagged with "include me in cron"
+	//		prof => id
+	$query = db_select('users', 'u');
+	$query->join('field_data_field_pearson_username', 'n', 'u.uid = n.entity_id');
+	$query->join('field_data_field_pearson_password', 'p', 'u.uid = p.entity_id');
+	$query
+	  ->fields('n', array('field_pearson_username_value'))
+	  ->fields('p', array('field_pearson_password_value'))
+	  ->condition('u.uid', $item['uid']);
+	$result = $query->execute()->fetchAll();
+	// returns a result like this for username: $result[0]->field_pearson_username_value
+	
+	if (isset($result[0]->field_pearson_username_value) && isset($result[0]->field_pearson_password_value)){
+		// both of them are set, let's request that token from Pearson LearningStudio
+		$application_id = variable_get('pearson_app_id'); // this must be set by the client, stored as a Drupal variable using variable_set() API call
+		$client_string = variable_get('pearson_client_string'); 
+		$username = $result[0]->field_pearson_username_value; 
+		$password = $result[0]->field_pearson_password_value;
+		
+		$post_request = 'grant_type=password'
+						.'&client_id='.$application_id
+			   			.'&username='.$client_string.'\\'.$username
+			   			.'&password='.$password; 
+
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_URL, 'https://m-api.ecollege.com/token');
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $post_request);
+		 
+		// TODO: remove below, only for competition sprint 
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+		 
+		$api_response = curl_exec($ch); 		 
+		$curlError = curl_error($ch);		 
+		$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+		 
+		if($curlError){
+			watchdog('pearson_mp', $curlError . ' - cURL problem');			 		
+			//dsm($curlError, "There was a problem making the API Call. cURL problem"); 		 
+		} else if (intval($http_code / 100) >= 4){		 
+			$decoded = json_decode($api_response); 
+			$msg = (is_object($decoded) && isset($decoded->error->message)) ? $decoded->error->message : "No message"; 
+			$msg .= " Error ID: "; 
+			$msg .= (is_object($decoded) && isset($decoded->error->errorId) && !empty($decoded->error->errorId)) ? $decoded->error->errorId : 'None provided';  
+			watchdog('pearson_mp', $http_code . " - The API Server responded with http_code");
+			// dsm($http_code, "The API Server responded with http_code");
+			// dsm($msg, "Message"); 		 
+		} else {
+			// all systems go, we soon have refresh_token, access_token, and expires_in		 
+			$decoded_response = json_decode($api_response); 
+			// $decoded_response->access_token is what's really useful here
+			$course_info = getCourseInformation($decoded_response->access_token);
+		}
+		
+		
+		
+		
+	}
+*/
 
 function _debug_mp($arg = NULL){
 	return '<h1>here and also</h1> some ' . $arg . ' the end';
