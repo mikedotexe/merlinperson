@@ -85,14 +85,31 @@ function pearson_mp_cron(){
 	drupal_set_message('ran cron purvis');
     $queue = DrupalQueue::get("pearsonSync");
 	$remoteAll = remoteOAuth1(); //remotePearson();
-	dsm($remoteAll, 'remoteOAuth1');
-	var_dump($remoteAll, 'remoteOAuth1');
+	//dsm($remoteAll, 'remoteOAuth1');
+	//var_dump($remoteAll, 'remoteOAuth1');
+	if (is_array($remoteAll->courses)){ // this helps block warnings
+		foreach ($remoteAll->courses as $k){
+		  // dsm($k, 'k'); // $k->id, ->displayCourseCode, ... title, callNumbers (array), links (array of Objects->href, ->rel)
+		  $queue->createItem($k);
+		}			
+	}
+ 
 	/*
 	$remoteProf = $remoteAll['prof'];
     foreach ($remoteProf as $data) {
       $queue->createItem($data);
     }
 	 */	
+}
+
+// tell drupal we have a queue to work on during cron
+function pearson_mp_cron_queue_info() {
+  $queues = array();
+  $queues['pearsonSync'] = array(
+    'worker callback' => 'PearsonUpdateOrAdd', //function to call for each item
+    'time' => 600, //seconds to spend working on the queue
+  );
+  return $queues;
 }
 
 function remoteOAuth1(){
@@ -145,10 +162,13 @@ function remoteOAuth1(){
 	for($i=0; $i<$stringlength; $i++) { 
 	    $packed_string .= pack("c", ord(substr($signable_string, $i, 1))); 
 	} 		
-	 
+	//dsm($packed_string, 'packed string'); 
 	$binary_cmac = $CMACEngine->generate($packed_string,$consumer_secret); 
+	//dsm($binary_cmac, 'binary cmac');
+	
 	$signature = base64_encode($binary_cmac);
-	 
+	//dsm($signature, 'siggy');
+	//return; 
 	 
 	// Create the OAuth HTTP Header 
 	$header_vars = array('realm'=>$request_url); 
@@ -181,8 +201,8 @@ function remoteOAuth1(){
 	 
 	// Test if there was a cURL problem (request didn't go through)
 	if($curlError){
-	 
-		 dsm($curlError, "There was a problem making the API Call. cURL problem"); 
+	 	 watchdog('pearson_mp', $curlError . " - There was a problem making the API Call. cURL problem");
+		 //dsm($curlError, "There was a problem making the API Call. cURL problem"); 
 	 
 	// Test if there is a 4XX error (request went through but erred). 
 	} else if(intval($http_code / 100) >=4){
@@ -191,41 +211,48 @@ function remoteOAuth1(){
 		$msg = (is_object($decoded) && isset($decoded->error->message))?$decoded->error->message:"No message reported.";
 		$msg.= " Error ID: "; 
 		$msg.= (is_object($decoded) && isset($decoded->error->errorId) && !empty($decoded->error->errorId))?$decoded->error->errorId:'None provided';  
-	 
-		dsm($msg, "The API Server responded with ".$http_code.". Message was:"); 
+	 	watchdog('pearson_mp', $msg . " - The API Server responded with ".$http_code.". Message was:");
+		//dsm($msg, "The API Server responded with ".$http_code.". Message was:"); 
 	 
 	// Else you have a successful response. 
 	} else {
 	 
 		$decoded_response = json_decode($api_response); 
-		dsm($decoded_response);  
+		//dsm($decoded_response);  
 		return $decoded_response;
 	}	
 }
 
-// tell drupal we have a queue to work on during cron
-function pearson_mp_cron_queue_info() {
-  $queues = array();
-  $queues['pearsonSync'] = array(
-    'worker callback' => 'PearsonUpdateOrAdd', //function to call for each item
-    'time' => 60, //seconds to spend working on the queue
-  );
-  return $queues;
-}
-
-// this will actually update a node or create new ones
+// $item will be an individual course for the term
+/* $item->id, 
+		->displayCourseCode
+ * 		->title
+ * 		->callNumbers (array)
+ * 		->links (array)
+ * 			0->href
+ * 			 ->rel
+ */
 function PearsonUpdateOrAdd($item){
 	// This essentially has each item that looks like what is returned from 
 	//dsm($item, 'item in the actual worker function');
 	
-  
-
+	// see if we have a node with that Pearson ID (not Drupal nid, or Node ID)
+	// if so, return the nid, if not, return blank
+	$findCourseID = $item->id;
+	$query = db_select('node', 'n');
+	$query->join('field_data_field_pearson_course_number', 'b', 'n.nid = b.entity_id');
+	$query
+	  ->fields('n', array('nid', 'vid'))
+	  ->condition('n.type', 'pearson_course')
+	  ->condition('b.field_pearson_course_number_value', $findCourseID);
+	$result = $query->execute()->fetchAll();
 	
+	//dsm($result, 'result from trying to fetch course id ' . $findCourseID);
 		
+		  			
 	$newNode = (object) NULL;
 	$newNode->type = 'pearson_course';
 	$newNode->uid = 1;
-	$newNode->created = strtotime("now");
 	$newNode->changed = strtotime("now");
 	$newNode->status = 1;
 	$newNode->comment = 0;
@@ -233,8 +260,34 @@ function PearsonUpdateOrAdd($item){
 	$newNode->moderate = 0;
 	$newNode->sticky = 0;
 	$newNode->language = 'und';
-	$newNode->title = "test";
-	$newNode->field_pearson_course_number[LANGUAGE_NONE][0]['value'] = $item['email'];
+
+	$newNode->field_pearson_course_number[LANGUAGE_NONE][0]['value'] = $findCourseID;
+	$newNode->field_pearson_course_code[LANGUAGE_NONE][0]['value'] = $item->displayCourseCode;
+	$newNode->title = $item->title;
+	
+	// call numbers
+	for ($i=0; $i < count($item->callNumbers); $i++) { 
+		$newNode->field_pearson_call_numbers[LANGUAGE_NONE][$i]['value'] = $item->callNumbers[$i];	
+	}
+	// links
+	for ($i=0; $i < count($item->links); $i++) { 
+		$newNode->field_pearson_links[LANGUAGE_NONE][$i]['value'] = $item->links[$i]->href;
+	}
+	
+	
+	// if we are updating this node (if the Course ID already exists in the system)
+	if (!empty($result)){
+		// we're updating this node
+		//dsm('not empty');
+		$newNode->nid = $result[0]->nid;
+		$newNode->vid = $result[0]->nid; // will throw notice without this line
+		// $newNode->is_new = FALSE;
+	} else {
+		// we're creating this node
+		$newNode->created = strtotime("now");	
+		$newNode->is_new = TRUE;	
+	}
+	
 	node_save($newNode);
 	
 }
@@ -249,7 +302,7 @@ function pearson_mp_form_alter(&$form, &$form_state, $form_id){
 	// dsm($form, 'form');
 } 
 
-// this fetches the information from Pearson WSOD
+// this fetches the information from Pearson WSOD (NOT BEING USED)
 function remotePearson(){
 	$ret = array();
 	// get list of professor id's that are tagged with "include me in cron"
