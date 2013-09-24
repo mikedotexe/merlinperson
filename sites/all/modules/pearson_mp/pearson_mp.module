@@ -83,43 +83,71 @@ function pearson_mp_permission() {
 // hook cron
 function pearson_mp_cron(){
 	drupal_set_message('ran cron purvis');
-    $queue = DrupalQueue::get("pearsonSync");
-	$remoteAll = remoteOAuth1(); //remotePearson();
+    $queueCoursesFromTerm = DrupalQueue::get("pearsonCourseFromTerm");
+    // $queueUsersInCourses = DrupalQueue::get("pearsonUserFromCourse");
+	
+	// get list of courses from the term_id
+	// TODO: check to make sure they have visited the settings page and filled in all values
+	$remoteAll = remoteOAuth1('/terms/' . variable_get('pearson_term_id') . '/courses'); //remotePearson();
 	//dsm($remoteAll, 'remoteOAuth1');
 	//var_dump($remoteAll, 'remoteOAuth1');
 	if (is_array($remoteAll->courses)){ // this helps block warnings
-		foreach ($remoteAll->courses as $k){
-		  // dsm($k, 'k'); // $k->id, ->displayCourseCode, ... title, callNumbers (array), links (array of Objects->href, ->rel)
-		  $queue->createItem($k);
+		foreach ($remoteAll->courses as $k => $v){
+		  // dsm($k, 'k'); // $k->id, ->displayCourseCode, ... title, callNumbers (array), links (array of Objects->href, ->rel)			
+		  // we'll be using this below to add people to a course
+		  $v->entity_reference = array(); 
+		  
+		  // get the User Enrollment information on this course
+		  $remoteUsersForCourse = remoteOAuth1('/courses/' . $v->id . '/enrolledUsers');
+		  // loop through, adding to queue, and also adding person to parent foreach, so we can reference them in the course node later		  
+		  if (is_array($remoteUsersForCourse->enrolledUsers)){
+		  	foreach ($remoteUsersForCourse->enrolledUsers as $user) {
+		  		//dsm($user, 'user');
+		  		//dsm($user->user->firstName, 'fname');
+				// $queueUsersInCourses->createItem($user);
+				
+				// attach Pearson UID to the course information				
+				$v->entity_reference[] = $user;			
+				
+			}
+		  }
+		  
+		  // now that we know who to attach to a course, create/update course nodes
+		  $queueCoursesFromTerm->createItem($v);
+		  // TODO: need to change the node_save of the Course nodes, so that it inputs the entity reference nid's based on the pearson uid's
 		}			
 	}
  
 	/*
 	$remoteProf = $remoteAll['prof'];
     foreach ($remoteProf as $data) {
-      $queue->createItem($data);
+      $queueCoursesFromTerm->createItem($data);
     }
 	 */	
 }
 
 // tell drupal we have a queue to work on during cron
 function pearson_mp_cron_queue_info() {
-  $queues = array();
-  $queues['pearsonSync'] = array(
+  $ret = array();
+  $ret['pearsonCourseFromTerm'] = array(
     'worker callback' => 'PearsonUpdateOrAdd', //function to call for each item
     'time' => 600, //seconds to spend working on the queue
   );
-  return $queues;
+  // $ret['pearsonUserFromCourse'] = array(
+    // 'worker callback' => 'PearsonUpdateOrAddUser', //function to call for each item
+    // 'time' => 600, //seconds to spend working on the queue
+  // );
+  return $ret;
 }
 
-function remoteOAuth1(){
+function remoteOAuth1($route){
 	// Set up the variables necessary to make the Request 
 	$method          = 'GET'; 
 	$application_id  = variable_get('pearson_app_id');  //Your Application's ID/Key. Use for all campuses.
 	$consumer_key    = variable_get('pearson_consumer_key');    //Campus-specific 
 	$consumer_secret = variable_get('pearson_consumer_secret'); //Campus-specific  
 	$nonce           = md5(microtime());   //Random & unique for every call
-	$api_route       = '/terms/' . variable_get('pearson_term_id') . '/courses';            //The API call you're requesting
+	$api_route       = $route;            //The API call you're requesting
 	$post_body       = '{requestBody}';    //POST or PUT body
 	$request_url     = 'https://m-api.ecollege.com'.$api_route;  
 	 
@@ -218,7 +246,7 @@ function remoteOAuth1(){
 	} else {
 	 
 		$decoded_response = json_decode($api_response); 
-		//dsm($decoded_response);  
+		dsm($decoded_response);  
 		return $decoded_response;
 	}	
 }
@@ -288,13 +316,56 @@ function PearsonUpdateOrAdd($item){
 		$newNode->is_new = TRUE;	
 	}
 	
-	node_save($newNode);
+	// TODO: add all the entity references stored in (i think) $item->entity_reference (array)
 	
+	node_save($newNode);
+	// TODO: get rid of this, just testing it out
+	foreach ($item->entity_reference as $user) {
+		PearsonUpdateOrAddUser($user);		
+	}
+	
+		
 }
 
-function getCourseInformation($access_token){
+function PearsonUpdateOrAddUser($item2){
+	// see if the user has a Drupal account
+	$debug1 = serialize($item2);
+	watchdog('pearson_mp', $debug1);
+	$query = db_select('users', 'u');
+	$query->join('field_data_field_pearson_user_id', 'p', 'u.uid = p.entity_id');
+	$query
+		->fields('u', array('uid'))
+		->condition('p.field_pearson_user_id_value', $item2->id);
+	$result = $query->execute()->fetchAll();
 	
+	if (empty($result)){
+		// we create a new user using user_save API
+			// TODO: add specific roles automatically
+		  $password = user_password(8);		 
+		  //set up the user fields
+		  $fields = array(
+		    'name' => $item2->user->firstName . ' ' . $item2->user->lastName,
+		    'mail' => $item2->user->emailAddress,
+		    'pass' => $password,
+		    'status' => 1,
+		    'init' => 'email address',
+		    'roles' => array(
+		      DRUPAL_AUTHENTICATED_RID => 'authenticated user',
+		    ),
+		    'field_pearson_user_id' => array(LANGUAGE_NONE => array(0 => array('value' => $item2->id))),
+		  ); 
+		 
+		  //the first parameter is left blank so a new user is created
+		  $account = user_save('', $fields);		
+	} else {
+		dsm($item2, 'need to edit this person but not coded yet');
+		// TODO: see https://api.drupal.org/comment/14774#comment-14774		
+		// we can choose to update the user information
+		// TODO: add check to see if they have a setting flagged (not yet on settings page)
+		
+	}		
 }
+
 
 function pearson_mp_form_alter(&$form, &$form_state, $form_id){
 	// dsm($form, 'form');
