@@ -1,0 +1,45 @@
+<?php
+
+define('PEARSON_ROLES', serialize(array('Pearson Student', 'Pearson Professor', 'Pearson TA')));
+
+function pearson_mp_install(){
+	$pearsonRoles = unserialize(PEARSON_ROLES);
+	foreach ($pearsonRoles as $role) {
+		$r = new stdClass();
+		$r->name = $role;
+		user_role_save($r);
+		
+		// let's store the role ID as a variable so we don't have to memorize or hack it
+		setVarForRole($role);
+	}
+	drupal_set_message('Pearson settings must be entered here: ' . l('Visit Pearson Settings (required)', 'admin/settings/pearson_mp'));	
+}
+
+function setVarForRole($name){
+	$query = db_select('role', 'r');
+	$query
+		->fields('r', array('rid'))
+		->condition('r.name', $name);
+	$result = $query->execute()->fetchAll();
+	// sets the variable
+	variable_set($name, $result[0]->rid);
+	//dsm($result, 'res');		
+}
+
+// remove varaibles for role, and all variables from settings
+function pearson_mp_uninstall(){	
+	// remove all role variables
+	$pearsonRoles = unserialize(PEARSON_ROLES);
+	foreach ($pearsonRoles as $role) {
+		variable_del($role);
+	}
+	
+	// remove settings variables
+	module_load_include('module', 'pearson_mp', 'pearson_mp');
+	$settingsElements = array_keys(_pearson_settings());
+	// get rid of all form elements that aren't what I define
+	$removeVars = array_diff($settingsElements, array('actions', '#submit', '#theme'));
+	foreach ($removeVars as $var) {
+		variable_del($var);
+	}
+}
