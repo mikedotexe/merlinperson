@@ -5,3 +5,12 @@ version = "7.x-1.00-dev"
 core = "7.x"
 project = "pearson"
 package = "pearson"
+
+dependencies[] = progress
+dependencies[] = ultimate_cron
+dependencies[] = background_process
+dependencies[] = field_group
+dependencies[] = bundle_copy
+dependencies[] = entity
+dependencies[] = entityreference
+dependencies[] = views

@@ -93,28 +93,10 @@ function pearson_mp_cron(){
 	//var_dump($remoteAll, 'remoteOAuth1');
 	if (is_array($remoteAll->courses)){ // this helps block warnings
 		foreach ($remoteAll->courses as $k => $v){
-		  // dsm($k, 'k'); // $k->id, ->displayCourseCode, ... title, callNumbers (array), links (array of Objects->href, ->rel)			
-		  // we'll be using this below to add people to a course
-		  $v->entity_reference = array(); 
-		  
-		  // get the User Enrollment information on this course
-		  $remoteUsersForCourse = remoteOAuth1('/courses/' . $v->id . '/enrolledUsers');
-		  // loop through, adding to queue, and also adding person to parent foreach, so we can reference them in the course node later		  
-		  if (is_array($remoteUsersForCourse->enrolledUsers)){
-		  	foreach ($remoteUsersForCourse->enrolledUsers as $user) {
-		  		//dsm($user, 'user');
-		  		//dsm($user->user->firstName, 'fname');
-				// $queueUsersInCourses->createItem($user);
-				
-				// attach Pearson UID to the course information				
-				$v->entity_reference[] = $user;			
-				
-			}
-		  }
+		  // dsm($k, 'k'); // $k->id, ->displayCourseCode, ... title, callNumbers (array), links (array of Objects->href, ->rel)
 		  
 		  // now that we know who to attach to a course, create/update course nodes
 		  $queueCoursesFromTerm->createItem($v);
-		  // TODO: need to change the node_save of the Course nodes, so that it inputs the entity reference nid's based on the pearson uid's
 		}			
 	}
  
@@ -246,7 +228,7 @@ function remoteOAuth1($route){
 	} else {
 	 
 		$decoded_response = json_decode($api_response); 
-		dsm($decoded_response);  
+		// dsm($decoded_response);  
 		return $decoded_response;
 	}	
 }
@@ -274,6 +256,25 @@ function PearsonUpdateOrAdd($item){
 	  ->condition('n.type', 'pearson_course')
 	  ->condition('b.field_pearson_course_number_value', $findCourseID);
 	$result = $query->execute()->fetchAll();
+// begin - add users	
+	  // we'll be using this below to add users to a course
+	  $item->entity_reference = array(); 
+	  
+	  // get the User Enrollment information on this course
+	  $remoteUsersForCourse = remoteOAuth1('/courses/' . $findCourseID . '/enrolledUsers');
+	  // loop through, adding to queue, and also adding person to parent foreach, so we can reference them in the course node later		  
+	  if (is_array($remoteUsersForCourse->enrolledUsers)){
+	  	foreach ($remoteUsersForCourse->enrolledUsers as $user) {
+	  		//dsm($user, 'user');
+	  		//dsm($user->user->firstName, 'fname');
+			// $queueUsersInCourses->createItem($user);
+			
+			// attach Pearson UID to the course information				
+			$item->entity_reference[] = $user;			
+			
+		}
+	  }	
+// end - add users	  
 	
 	//dsm($result, 'result from trying to fetch course id ' . $findCourseID);
 		
@@ -300,6 +301,7 @@ function PearsonUpdateOrAdd($item){
 	// links
 	for ($i=0; $i < count($item->links); $i++) { 
 		$newNode->field_pearson_links[LANGUAGE_NONE][$i]['value'] = $item->links[$i]->href;
+		$newNode->field_pearson_links[LANGUAGE_NONE][$i]['value'] = 'working?';
 	}
 	
 	
@@ -317,20 +319,22 @@ function PearsonUpdateOrAdd($item){
 	}
 	
 	// TODO: add all the entity references stored in (i think) $item->entity_reference (array)
-	
-	node_save($newNode);
-	// TODO: get rid of this, just testing it out
-	foreach ($item->entity_reference as $user) {
-		PearsonUpdateOrAddUser($user);		
+	$i = 0;
+	foreach ($item->entity_reference as $user) {		
+		$drupalUID = PearsonUpdateOrAddUser($user); // returns the drupal UID
+		$newNode->field_pearson_course_users[LANGUAGE_NONE][$i]['target_id'] = $drupalUID; // add this to the entity reference for course
+		$newNode->field_pearson_course_users[LANGUAGE_NONE][$i]['target_type'] = 'user'; // required
+		$i++; // iterate
 	}
 	
-		
+	node_save($newNode);		
 }
 
+// returns UID of the newly created, or already existing user that's passed in as a parameter
 function PearsonUpdateOrAddUser($item2){
 	// see if the user has a Drupal account
-	$debug1 = serialize($item2);
-	watchdog('pearson_mp', $debug1);
+	// $debug1 = serialize($item2);
+	// watchdog('pearson_mp', $debug1);
 	$query = db_select('users', 'u');
 	$query->join('field_data_field_pearson_user_id', 'p', 'u.uid = p.entity_id');
 	$query
@@ -356,9 +360,12 @@ function PearsonUpdateOrAddUser($item2){
 		  ); 
 		 
 		  //the first parameter is left blank so a new user is created
-		  $account = user_save('', $fields);		
+		  $account = user_save('', $fields);
+		  return $account->uid;	// uid of the newly created user
 	} else {
-		dsm($item2, 'need to edit this person but not coded yet');
+		return $result[0]->uid; // this is the uid of the existing user
+		
+		// dsm($item2, 'need to edit this person but not coded yet');
 		// TODO: see https://api.drupal.org/comment/14774#comment-14774		
 		// we can choose to update the user information
 		// TODO: add check to see if they have a setting flagged (not yet on settings page)
@@ -373,6 +380,7 @@ function pearson_mp_form_alter(&$form, &$form_state, $form_id){
 	// dsm($form, 'form');
 } 
 
+// TODO: not used
 // this fetches the information from Pearson WSOD (NOT BEING USED)
 function remotePearson(){
 	$ret = array();
@@ -392,7 +400,7 @@ function remotePearson(){
 		$ret['prof'][] = array('uid' => $value->uid, 'email' => $value->mail);		
 	}
 	//dsm($result, 'result');		
-	dsm($ret, 'return value');
+	// dsm($ret, 'return value');
 	return $ret;
 }
 
@@ -550,9 +558,4 @@ function _mpcurl($id = NULL, $type = NULL){
 	$result = json_decode($buffer);  
 	dsm($result, 'result');
 	return $result;
-}
-
-function get_api_key(){
-	include('mykey.php');
-	return $apikey;
 }
