@@ -7,10 +7,16 @@ function pearson_mp_install(){
 	foreach ($pearsonRoles as $role) {
 		$r = new stdClass();
 		$r->name = $role;
-		user_role_save($r);
+		// if there's no role like this one yet
+		if (!roleExists($role)) user_role_save($r);
 		
 		// let's store the role ID as a variable so we don't have to memorize or hack it
-		setVarForRole($role);
+		$rid = setVarForRole($role);
+		$r_perms = array('pearson see all students' => TRUE);
+		// $r_perms = array();
+		//$r_perms[] = array('pearson see all students' => TRUE); // everyone gets this by default
+		if ($role == 'Pearson Professor') $r_perms = array_merge($r_perms, array('pearson see all grades' => TRUE)); // only professor gets this
+		user_role_change_permissions($rid, $r_perms);  
 	}
 	drupal_set_message('Pearson settings must be entered here: ' . l('Visit Pearson Settings (required)', 'admin/settings/pearson_mp'));	
 }
@@ -21,13 +27,27 @@ function setVarForRole($name){
 		->fields('r', array('rid'))
 		->condition('r.name', $name);
 	$result = $query->execute()->fetchAll();
-	// sets the variable
+	// sets the variable	
 	variable_set($name, $result[0]->rid);
+	return $result[0]->rid;
 	//dsm($result, 'res');		
 }
 
+function roleExists($name){
+	$query = db_select('role', 'r');
+	$query
+		->fields('r', array('rid'))
+		->condition('r.name', $name);
+	$result = $query->execute()->fetchAll();
+	// sets the variable	
+	if (empty($result)) return false;
+	return true;
+}
+
 // remove varaibles for role, and all variables from settings
-function pearson_mp_uninstall(){	
+
+function pearson_mp_uninstall(){
+	/*	
 	// remove all role variables
 	$pearsonRoles = unserialize(PEARSON_ROLES);
 	foreach ($pearsonRoles as $role) {
@@ -42,4 +62,5 @@ function pearson_mp_uninstall(){
 	foreach ($removeVars as $var) {
 		variable_del($var);
 	}
+	 */
 }

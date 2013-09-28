@@ -1,10 +1,11 @@
 ; $Id$
-name = Pearson Purvis Submission
+name = Pearson Contest - Mike Purvis
 description = A custom module designed to use WSOD from the Pearson APIs
 version = "7.x-1.00-dev"
 core = "7.x"
-project = "pearson"
-package = "pearson"
+; TODO: change these back, remove the Z
+project = "Zpearson"
+package = "Zpearson"
 
 dependencies[] = progress
 dependencies[] = ultimate_cron

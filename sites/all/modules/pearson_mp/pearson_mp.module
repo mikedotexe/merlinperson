@@ -78,7 +78,16 @@ function pearson_mp_permission() {
     'administer pearson settings' => array(
       'title' => t('Access and change Pearson settings'),
       'description' => t('Allow users to access the settings page, change Application ID, etc...'),
-    ));
+    ),
+	'pearson see all students' => array(
+	  'title' => t('Allowed to see other students in the system, basic information like email and classes'),
+	  'description' => t('On by default')
+    ),
+	'pearson see all grades' => array(
+	  'title' => t('Allowed to see other students\' grades'),
+	  'description' => t('Perhaps for teachers and teaching assistants')
+    )
+	);
 }
 // hook cron
 function pearson_mp_cron(){
