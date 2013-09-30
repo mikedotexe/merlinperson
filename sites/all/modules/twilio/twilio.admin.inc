@@ -126,7 +126,8 @@ function twilio_admin_test_form($form, &$form_state) {
  */
 function twilio_admin_test_form_validate($form, &$form_state) {
   $value = $form_state['values']['number'];
-  if (!is_numeric($value) || intval($value) != $value) {
+  // if (!is_numeric($value) || intval($value) != $value) {
+  if (!is_numeric($value)) {
     form_set_error('number', t('You must enter a valid phone number'));
   }
 }
