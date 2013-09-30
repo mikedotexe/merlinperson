@@ -351,6 +351,27 @@ function PearsonUpdateOrAddUser($item2){
 		->condition('p.field_pearson_user_id_value', $item2->id);
 	$result = $query->execute()->fetchAll();
 	
+	// find out which roles to apply
+	// 823 => PROF
+	// 430 => TAST
+	// 916 => STUD
+	// watchdog('pearson_mp', 'setting initial auth role');
+	$role = array(DRUPAL_AUTHENTICATED_RID => 'authenticated user');
+	switch ($item2->role->id) {
+		case '823':
+			// watchdog('pearson_mp', 'setting prof');
+			$role[variable_get('Pearson Professor')] = 'Pearson Professor';
+			break;
+		case '430':
+			// watchdog('pearson_mp', 'setting ta');
+			$role[variable_get('Pearson TA')] = 'Pearson TA';
+			break;
+		case '916':
+		// watchdog('pearson_mp', 'setting student');
+			$role[variable_get('Pearson Student')] = 'Pearson Student';
+			break;
+	}
+	
 	if (empty($result)){
 		// we create a new user using user_save API
 			// TODO: add specific roles automatically
@@ -362,9 +383,7 @@ function PearsonUpdateOrAddUser($item2){
 		    'pass' => $password,
 		    'status' => 1,
 		    'init' => 'email address',
-		    'roles' => array(
-		      DRUPAL_AUTHENTICATED_RID => 'authenticated user',
-		    ),
+		    'roles' => $role,
 		    'field_pearson_user_id' => array(LANGUAGE_NONE => array(0 => array('value' => $item2->id))),
 		  ); 
 		 
@@ -372,13 +391,20 @@ function PearsonUpdateOrAddUser($item2){
 		  $account = user_save('', $fields);
 		  return $account->uid;	// uid of the newly created user
 	} else {
-		return $result[0]->uid; // this is the uid of the existing user
+			// we can choose to update the user information
+			// TODO: add check to see if they have a setting flagged (not yet on settings page)		
+		  $account = user_load($result[0]->uid);
 		
-		// dsm($item2, 'need to edit this person but not coded yet');
-		// TODO: see https://api.drupal.org/comment/14774#comment-14774		
-		// we can choose to update the user information
-		// TODO: add check to see if they have a setting flagged (not yet on settings page)
+		  $fields = array(
+		    'name' => $item2->user->firstName . ' ' . $item2->user->lastName,
+		    'roles' => $role,
+		    'field_pearson_user_id' => array(LANGUAGE_NONE => array(0 => array('value' => $item2->id))),
+		  ); 
+		 
+		  // updates the user
+		  user_save($account, $fields);				
 		
+		  return $result[0]->uid; // this is the uid of the existing user					
 	}		
 }
 
