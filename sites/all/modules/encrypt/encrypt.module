@@ -144,6 +144,7 @@ function encrypt_initialize() {
  *   A serialized array containing the encrypted text and encryption method.
  */
 function encrypt($text = '', $options = array(), $method = NULL, $key_name = NULL) {
+	// dsm($text, 'called here!');
   encrypt_initialize();
   return _encrypt_decrypt('encrypt', $text, $options, $method, $key_name);
 }

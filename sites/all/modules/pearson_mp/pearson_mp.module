@@ -385,9 +385,29 @@ function PearsonUpdateOrAddUser($item2){
 
 function pearson_mp_form_alter(&$form, &$form_state, $form_id){
 	// dsm($form, 'form');
-	//dsm($form_id, 'form_id');
-	// dsm($form, 'form');
+	// dsm($form_id, 'form_id');
 } 
+
+function pearson_mp_form_user_profile_form_alter(&$form, &$form_state){
+	// dsm(_decryptFromUID(1));
+	$form['#validate'][] = '_profile_submit';
+}
+
+function _profile_submit(&$form, &$form_state){
+	// dsm($form_state, 'fs');
+	$enc = encrypt($form_state['values']['field_pearson_prof_password'][LANGUAGE_NONE][0]['value']);
+	$form_state['values']['field_pearson_prof_password'][LANGUAGE_NONE][0]['value'] = bin2hex($enc);
+}
+
+function _decryptFromUID($uid){
+	$query = db_select('users', 'u');
+	$query->join('field_data_field_pearson_prof_password', 'f', 'u.uid = f.entity_id');
+	$query->fields('f', array('field_pearson_prof_password_value'));
+	$result = $query->execute()->fetchAll();
+	$bin = hex2bin($result[0]->field_pearson_prof_password_value);
+	$dec = decrypt($bin);
+	return $dec;
+}
 
 // TODO: not used
 // this fetches the information from Pearson WSOD (NOT BEING USED)
