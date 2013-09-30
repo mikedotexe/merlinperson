@@ -510,22 +510,22 @@ function remoteOAuth2Tokens($uid = NULL, $u = NULL, $p = NULL){
 	// get list of professor id's that are tagged with "include me in cron"
 	//		prof => id
 	$query = db_select('users', 'u');
-	$query->join('field_data_field_pearson_username', 'n', 'u.uid = n.entity_id');
-	$query->join('field_data_field_pearson_password', 'p', 'u.uid = p.entity_id');
+	$query->join('field_data_field_pearson_prof_username', 'n', 'u.uid = n.entity_id');
+	$query->join('field_data_field_pearson_prof_password', 'p', 'u.uid = p.entity_id');
 	$query
-	  ->fields('n', array('field_pearson_username_value'))
-	  ->fields('p', array('field_pearson_password_value'))
+	  ->fields('n', array('field_pearson_prof_username_value'))
+	  ->fields('p', array('field_pearson_prof_password_value'))
 	  ->condition('u.uid', $uid);
 	$result = $query->execute()->fetchAll();
-	// returns a result like this for username: $result[0]->field_pearson_username_value
+	// returns a result like this for username: $result[0]->field_pearson_prof_username_value
 	
-	// if (isset($result[0]->field_pearson_username_value) && isset($result[0]->field_pearson_password_value)){
+	// if (isset($result[0]->field_pearson_prof_username_value) && isset($result[0]->field_pearson_prof_password_value)){
 		// both of them are set, let's request that token from Pearson LearningStudio
 		$application_id = variable_get('pearson_app_id'); // this must be set by the client, stored as a Drupal variable using variable_set() API call
 		$client_string = variable_get('pearson_client_string');
 		// if there are arguments for these sent in, then use them 
-		$username = (isset($u)) ? $u : $result[0]->field_pearson_username_value; 
-		$password = isset($p) ? $p : $result[0]->field_pearson_password_value;
+		$username = (isset($u)) ? $u : $result[0]->field_pearson_prof_username_value; 
+		$password = isset($p) ? $p : $result[0]->field_pearson_prof_password_value;
 		
 		$post_request = 'grant_type=password'
 						.'&client_id='.$application_id
