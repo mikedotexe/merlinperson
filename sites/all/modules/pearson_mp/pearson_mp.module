@@ -230,7 +230,7 @@ function remoteOAuth1($route){
 		$msg = (is_object($decoded) && isset($decoded->error->message))?$decoded->error->message:"No message reported.";
 		$msg.= " Error ID: "; 
 		$msg.= (is_object($decoded) && isset($decoded->error->errorId) && !empty($decoded->error->errorId))?$decoded->error->errorId:'None provided';  
-	 	watchdog('pearson_mp', $msg . " - The API Server responded with ".$http_code.". Message was:");
+	 	watchdog('pearson_mp', $msg . " - The API Server responded with ".$http_code.". Message was:".$info." route:". $route);
 		//dsm($msg, "The API Server responded with ".$http_code.". Message was:"); 
 	 
 	// Else you have a successful response. 
