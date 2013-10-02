@@ -7,6 +7,8 @@ core = "7.x"
 project = "Zpearson"
 package = "Zpearson"
 
+; TODO: revisit dependencies
+dependencies[] = date
 dependencies[] = encrypt
 dependencies[] = progress
 dependencies[] = ultimate_cron
