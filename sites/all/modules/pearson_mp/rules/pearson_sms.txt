@@ -1,0 +1,17 @@
+{ "rules_pearson_sms" : {
+    "LABEL" : "pearson_sms",
+    "PLUGIN" : "reaction rule",
+    "REQUIRES" : [ "rules", "php" ],
+    "ON" : [ "node_insert" ],
+    "IF" : [
+      { "node_is_of_type" : {
+          "node" : [ "node" ],
+          "type" : { "value" : { "pearson_announcement" : "pearson_announcement" } }
+        }
+      }
+    ],
+    "DO" : [
+      { "php_eval" : { "code" : "watchdog(\u0027pearson_mp\u0027, \u0027sending sms via twilio\u0027);\r\nif (function_exists(\u0027twilio_send\u0027)) twilio_send(\u00278089879854\u0027, \u0027sent when a new announcement is made\u0027);" } }
+    ]
+  }
+}

@@ -8,6 +8,9 @@ project = "Zpearson"
 package = "Zpearson"
 
 ; TODO: revisit dependencies
+dependencies[] = twilio
+dependencies[] = php
+dependencies[] = rules
 dependencies[] = date
 dependencies[] = encrypt
 dependencies[] = progress
