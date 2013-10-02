@@ -8,6 +8,7 @@ project = "Zpearson"
 package = "Zpearson"
 
 ; TODO: revisit dependencies
+dependencies[] = bundle_copy
 dependencies[] = twilio
 dependencies[] = php
 dependencies[] = rules
@@ -21,3 +22,4 @@ dependencies[] = bundle_copy
 dependencies[] = entity
 dependencies[] = entityreference
 dependencies[] = views
+dependencies[] = views_ui

@@ -44,6 +44,8 @@ function roleExists($name){
 	return true;
 }
 
+
+
 // remove varaibles for role, and all variables from settings
 // TODO: uncomment out the uninstall function
 function pearson_mp_uninstall(){

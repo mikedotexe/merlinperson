@@ -206,7 +206,8 @@ function remoteOAuth1($route){
 	$ch = curl_init();
 	curl_setopt($ch, CURLOPT_URL, $request_url);
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // used to be 0 and worked
+	curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows; U; MSIE 9.0; WIndows NT 9.0; en-US)'); 
 	curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
 	curl_setopt($ch, CURLOPT_HTTPHEADER, array($oauth_http_header)); 
 	if($method=='POST' || $method=='PUT')
@@ -661,4 +662,34 @@ function _mpcurl($id = NULL, $type = NULL){
 	$result = json_decode($buffer);  
 	dsm($result, 'result');
 	return $result;
+}
+
+/* called from .install */
+
+function _import_bundles(){
+	watchdog('pearson_mp', 'import bundles called');
+	$path = drupal_get_path('module', 'pearson_mp') . '/bundles';
+	$dir = new DirectoryIterator($path);
+	// dsm($path, 'dir');
+	foreach ($dir as $fileinfo) {// loop through each file in the directory
+		if (!$fileinfo->isDot()) { // make sure its not . (current directory) or .. (parent directory)
+			$filename = $fileinfo->getFilename();
+			$contents = file_get_contents($path . '/' . $filename);
+			// dsm($filename, 'filename');
+			// dsm($contents, 'c');
+			
+			if (function_exists('bundle_copy_import_submit')){ // function that bundle copy uses to import
+				$form = array();
+				$form_state = array();
+				$form_state['values']['macro'] = $contents;
+				// for these imports, work gets done in the _validate and _submit functions to do the actual import
+				bundle_copy_import_submit('', $form_state); // function doesn't use first arg
+				watchdog('pearson_mp', 'Imported ' . $filename);
+			}else{
+				$error = 'No bundle_copy_import_submit function found, bundle installation cannot proceed.';
+				watchdog('pearson_mp', $error, NULL, WATCHDOG_CRITICAL);
+				dsm($error);
+			}	 			
+		}
+	}	
 }
