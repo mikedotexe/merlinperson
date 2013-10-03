@@ -91,7 +91,7 @@ function pearson_mp_permission() {
 }
 // hook cron
 function pearson_mp_cron(){
-	drupal_set_message('ran cron purvis');
+	watchdog('pearson_mp', 'ran cron');
     $queueCoursesFromTerm = DrupalQueue::get("pearsonCourseFromTerm");
     // $queueUsersInCourses = DrupalQueue::get("pearsonUserFromCourse");
 	
