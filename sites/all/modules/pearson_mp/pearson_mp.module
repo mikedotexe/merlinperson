@@ -1,5 +1,11 @@
 <?php
+// TODO: make a more error-proof require later
 require_once 'sites/all/libraries/CryptLib/bootstrap.php'; // for doing encryption
+
+function pearson_mp_views_api(){
+	return array('api' => 2);
+}
+
 // hook_menu
 function pearson_mp_menu(){
 	$items = array();
