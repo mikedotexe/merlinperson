@@ -69,6 +69,8 @@ function _pearson_settings() {
     '#default_value' => variable_get('pearson_consumer_secret'),
     '#required' => TRUE,
   );
+  
+  // TODO: add submit button to reset all bundles
 
   return system_settings_form($form);
 }
@@ -664,7 +666,9 @@ function _mpcurl($id = NULL, $type = NULL){
 	return $result;
 }
 
-/* called from .install */
+/* called from .install 
+ *TODO: unfinished 
+ * */
 
 function _import_bundles(){
 	watchdog('pearson_mp', 'import bundles called');
@@ -692,4 +696,16 @@ function _import_bundles(){
 			}	 			
 		}
 	}	
+}
+
+function pearson_mp_user_view($account, $view_mode, $langcode){
+	dsm($account, 'account');
+	dsm($view_mode, 'view mode');
+	$roles = $account->roles;
+	unset($roles[2]);
+	$printedRoles = implode(', ', $roles);
+	$account->content['role'] = array(
+	 '#type' => 'markup',
+	 '#markup' => "<h2>Role(s): $printedRoles</h2>",
+	);
 }
