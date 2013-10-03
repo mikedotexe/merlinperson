@@ -699,13 +699,53 @@ function _import_bundles(){
 }
 
 function pearson_mp_user_view($account, $view_mode, $langcode){
-	dsm($account, 'account');
-	dsm($view_mode, 'view mode');
+
 	$roles = $account->roles;
 	unset($roles[2]);
 	$printedRoles = implode(', ', $roles);
+	// dsm(arg(1));
+	
 	$account->content['role'] = array(
 	 '#type' => 'markup',
 	 '#markup' => "<h2>Role(s): $printedRoles</h2>",
 	);
+	
+	// find all classes associated with this user, embed views for each
+	$classIDs = classesByUID(arg(1));
+	for ($i=0; $i < count($classIDs); $i++) { 
+		$view = views_embed_view('pearson_course', 'page', $classIDs[$i]->entity_id);
+		$account->content['view' . $i] = array(
+		 '#type' => 'markup',
+		 '#weight' => 100 + $i,
+		 '#markup' => $view,
+		);
+		
+	} 
+	
+
+	
+	// dsm($account, 'account');
+	// dsm($view_mode, 'view mode');	
 }
+
+// returns an array like this: 0->entity_id, 1->entity_id
+
+function classesByUID($uid){
+	$query = db_select('users', 'u');
+	$query->join('field_data_field_pearson_course_users', 'c', 'u.uid = c.field_pearson_course_users_target_id');
+	$query	
+		->fields('c', array('entity_id'))
+		->condition('u.uid', $uid);
+	$results = $query->execute()->fetchAll();
+	return $results;
+}
+/*
+	$findCourseID = $item->id;
+	$query = db_select('node', 'n');
+	$query->join('field_data_field_pearson_course_number', 'b', 'n.nid = b.entity_id');
+	$query
+	  ->fields('n', array('nid', 'vid'))
+	  ->condition('n.type', 'pearson_course')
+	  ->condition('b.field_pearson_course_number_value', $findCourseID);
+	$result = $query->execute()->fetchAll();
+	*/

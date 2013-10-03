@@ -426,10 +426,9 @@ $data = array(
         'display' => array(
           'default' => array(
             'label' => 'above',
-            'type' => 'list_default',
+            'type' => 'hidden',
+            'weight' => '0',
             'settings' => array(),
-            'module' => 'list',
-            'weight' => 0,
           ),
         ),
         'required' => 0,
@@ -464,10 +463,9 @@ $data = array(
         'display' => array(
           'default' => array(
             'label' => 'above',
-            'type' => 'text_default',
+            'type' => 'hidden',
+            'weight' => '7',
             'settings' => array(),
-            'module' => 'text',
-            'weight' => 7,
           ),
         ),
         'required' => 0,
@@ -499,9 +497,9 @@ $data = array(
           'default' => array(
             'label' => 'above',
             'type' => 'text_default',
+            'weight' => '8',
             'settings' => array(),
             'module' => 'text',
-            'weight' => 8,
           ),
         ),
         'required' => 0,
@@ -532,10 +530,9 @@ $data = array(
         'display' => array(
           'default' => array(
             'label' => 'above',
-            'type' => 'text_default',
+            'type' => 'hidden',
+            'weight' => '9',
             'settings' => array(),
-            'module' => 'text',
-            'weight' => 9,
           ),
         ),
         'required' => 0,
@@ -567,9 +564,9 @@ $data = array(
           'default' => array(
             'label' => 'above',
             'type' => 'text_default',
+            'weight' => '4',
             'settings' => array(),
             'module' => 'text',
-            'weight' => 4,
           ),
         ),
         'required' => 0,
@@ -601,9 +598,9 @@ $data = array(
           'default' => array(
             'label' => 'above',
             'type' => 'text_default',
+            'weight' => '6',
             'settings' => array(),
             'module' => 'text',
-            'weight' => 6,
           ),
         ),
         'required' => 0,
