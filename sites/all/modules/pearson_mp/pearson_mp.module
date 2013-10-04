@@ -319,7 +319,6 @@ function PearsonUpdateOrAdd($item){
 	// links
 	for ($i=0; $i < count($item->links); $i++) { 
 		$newNode->field_pearson_links[LANGUAGE_NONE][$i]['value'] = $item->links[$i]->href;
-		$newNode->field_pearson_links[LANGUAGE_NONE][$i]['value'] = 'working?';
 	}
 	
 	
