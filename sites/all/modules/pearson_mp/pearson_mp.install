@@ -1,47 +1,28 @@
 <?php
 
-define('PEARSON_ROLES', serialize(array('Pearson Student', 'Pearson Professor', 'Pearson TA')));
-
 function pearson_mp_install(){
-	$pearsonRoles = unserialize(PEARSON_ROLES);
-	foreach ($pearsonRoles as $role) {
-		$r = new stdClass();
-		$r->name = $role;
-		// if there's no role like this one yet
-		if (!roleExists($role)) user_role_save($r);
-		
-		// let's store the role ID as a variable so we don't have to memorize or hack it
-		$rid = setVarForRole($role);
-		$r_perms = array('pearson see all students' => TRUE);
-		// $r_perms = array();
-		//$r_perms[] = array('pearson see all students' => TRUE); // everyone gets this by default
-		if ($role == 'Pearson Professor') $r_perms = array_merge($r_perms, array('pearson see all grades' => TRUE)); // only professor gets this
-		user_role_change_permissions($rid, $r_perms);  
-	}
-	drupal_set_message('Pearson settings must be entered here: ' . l('Visit Pearson Settings (required)', 'admin/settings/pearson_mp'));	
-}
-
-function setVarForRole($name){
-	$query = db_select('role', 'r');
-	$query
-		->fields('r', array('rid'))
-		->condition('r.name', $name);
-	$result = $query->execute()->fetchAll();
-	// sets the variable	
-	variable_set($name, $result[0]->rid);
-	return $result[0]->rid;
-	//dsm($result, 'res');		
-}
-
-function roleExists($name){
-	$query = db_select('role', 'r');
-	$query
-		->fields('r', array('rid'))
-		->condition('r.name', $name);
-	$result = $query->execute()->fetchAll();
-	// sets the variable	
-	if (empty($result)) return false;
-	return true;
+	$batch = array(
+	  'title' => t('Importing'),
+	  'operations' => array(
+	    array('_import_roles', array()),
+	    array('_import_bundles', array()),
+	    array('_import_rules', array())
+	  ),
+	  'file' => 'pearson_mp.module',
+	);
+	batch_set($batch);
+	// Only needed if not inside a form _submit handler.
+	// Setting redirect in batch_process.
+	batch_process('admin/settings/pearson_mp');
+	// drupal_set_message('Pearson settings must be entered here: ' . l('Visit Pearson Settings (required)', 'admin/settings/pearson_mp'));
+	
+	// Now the roles are all set
+	// Import bundles
+	//_import_bundles();
+	// Import rules
+	//_import_rules();
+	// Run cron to get everything started.
+	// drupal_cron_run();	
 }
 
 // this prepares the database to be able to handle hashes and make more intelligent checks

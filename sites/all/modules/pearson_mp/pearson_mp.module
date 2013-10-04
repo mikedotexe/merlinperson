@@ -1,4 +1,5 @@
 <?php
+define('PEARSON_ROLES', serialize(array('Pearson Student', 'Pearson Professor', 'Pearson TA')));
 // TODO: make a more error-proof require later
 require_once 'sites/all/libraries/CryptLib/bootstrap.php'; // for doing encryption
 
@@ -671,12 +672,56 @@ function _mpcurl($id = NULL, $type = NULL){
 	return $result;
 }
 
+function _import_roles(){
+	watchdog('pearson_mp', 'Import user roles...');
+	$pearsonRoles = unserialize(PEARSON_ROLES);
+	foreach ($pearsonRoles as $role) {
+		$r = new stdClass();
+		$r->name = $role;
+		// if there's no role like this one yet
+		if (!roleExists($role)) user_role_save($r);
+		
+		// let's store the role ID as a variable so we don't have to memorize or hack it
+		$rid = setVarForRole($role);
+		$r_perms = array('pearson see all students' => TRUE);
+		// $r_perms = array();
+		//$r_perms[] = array('pearson see all students' => TRUE); // everyone gets this by default
+		if ($role == 'Pearson Professor') $r_perms = array_merge($r_perms, array('pearson see all grades' => TRUE)); // only professor gets this
+		user_role_change_permissions($rid, $r_perms);  
+	}	
+}
+
+// tied to _import_roles
+function setVarForRole($name){
+	$query = db_select('role', 'r');
+	$query
+		->fields('r', array('rid'))
+		->condition('r.name', $name);
+	$result = $query->execute()->fetchAll();
+	// sets the variable	
+	variable_set($name, $result[0]->rid);
+	return $result[0]->rid;
+	//dsm($result, 'res');		
+}
+
+// tied to _import_roles
+function roleExists($name){
+	$query = db_select('role', 'r');
+	$query
+		->fields('r', array('rid'))
+		->condition('r.name', $name);
+	$result = $query->execute()->fetchAll();
+	// sets the variable	
+	if (empty($result)) return false;
+	return true;
+}
+
 /* called from .install 
  *TODO: unfinished 
  * */
 
 function _import_bundles(){
-	watchdog('pearson_mp', 'import bundles called');
+	watchdog('pearson_mp', 'Import bundles...');
 	$path = drupal_get_path('module', 'pearson_mp') . '/bundles';
 	$dir = new DirectoryIterator($path);
 	// dsm($path, 'dir');
@@ -700,7 +745,45 @@ function _import_bundles(){
 				dsm($error);
 			}	 			
 		}
-	}	
+	}
+}
+
+/* called from .install 
+ * Imports all rules defined in the /rules folder 
+ * */
+
+function _import_rules(){
+	// basically I'll be mimicking functionality in the import function, check to make sure it exists, for good measure
+	module_load_include('inc', 'rules', 'ui/ui.forms'); // otherwise it can't see the file
+	
+	watchdog('pearson_mp', 'Import rules...');
+	$path = drupal_get_path('module', 'pearson_mp') . '/rules';
+	$dir = new DirectoryIterator($path);
+	// dsm($path, 'dir');
+	foreach ($dir as $fileinfo) {// loop through each file in the directory
+		if (!$fileinfo->isDot()) { // make sure its not . (current directory) or .. (parent directory)
+			$filename = $fileinfo->getFilename();
+			$contents = file_get_contents($path . '/' . $filename);
+			// dsm($filename, 'filename');
+			// dsm($contents, 'c');
+			
+			if (function_exists('rules_ui_import_form_validate')){ // function that bundle copy uses to import
+				$form = array();
+				$form_state = array();
+				$form_state['values']['import'] = $contents;
+				$form_state['values']['overwrite'] = 1;
+				
+				// for these imports, work gets done in the _validate and _submit functions to do the actual import
+				rules_ui_import_form_validate($form, $form_state);
+				rules_ui_import_form_submit($form, $form_state);
+				watchdog('pearson_mp', 'Imported ' . $filename);
+			}else{
+				$error = 'No rules_ui_import_form_validate function found, rules installation cannot proceed.';
+				watchdog('pearson_mp', $error, NULL, WATCHDOG_CRITICAL);
+				dsm($error);
+			}	 			
+		}
+	}
 }
 
 function pearson_mp_user_view($account, $view_mode, $langcode){
