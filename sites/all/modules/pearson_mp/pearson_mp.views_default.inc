@@ -1,7 +1,7 @@
 <?php
 
 function pearson_mp_views_default_views() {
-/*
+
 	$views = array();
 	$path = drupal_get_path('module', 'pearson_mp') . '/views';
 	$dir = new DirectoryIterator($path);
@@ -15,5 +15,5 @@ function pearson_mp_views_default_views() {
 	}
 	
 	return $views;
-	*/
+	
 }
