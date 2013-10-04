@@ -44,7 +44,40 @@ function roleExists($name){
 	return true;
 }
 
+// this prepares the database to be able to handle hashes and make more intelligent checks
+//	as to whether data is new/changed and needs to be created/updated
 
+function pearson_mp_schema() {
+  $schema = array();
+  $schema['pearson_mp_hashes'] = array(
+    'description' => 'Keeps track of hashes',
+    'fields' => array(
+      'hid' => array(
+        'description' => 'Hash ID',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'description' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'hash' => array(
+      	'description' => 'Quick CRC32 hash',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'fulldata' => array(
+        'type' => 'blob',
+        'size' => 'big'
+      ),
+    ),
+    'primary key' => array('hid'),
+  );
+  return $schema;
+}
 
 // remove varaibles for role, and all variables from settings
 // TODO: uncomment out the uninstall function
@@ -66,3 +99,4 @@ function pearson_mp_uninstall(){
 	}
 	 */
 }
+
