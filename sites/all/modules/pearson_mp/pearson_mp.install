@@ -27,7 +27,7 @@ function pearson_mp_install(){
 
 // this prepares the database to be able to handle hashes and make more intelligent checks
 //	as to whether data is new/changed and needs to be created/updated
-
+// TODO: add "last changed" to schema
 function pearson_mp_schema() {
   $schema = array();
   $schema['pearson_mp_hashes'] = array(

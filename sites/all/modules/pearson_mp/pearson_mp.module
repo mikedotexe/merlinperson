@@ -105,25 +105,70 @@ function pearson_mp_cron(){
     // $queueUsersInCourses = DrupalQueue::get("pearsonUserFromCourse");
 	
 	// get list of courses from the term_id
-	// TODO: check to make sure they have visited the settings page and filled in all values
-	$remoteAll = remoteOAuth1('/terms/' . variable_get('pearson_term_id') . '/courses'); //remotePearson();
-	//dsm($remoteAll, 'remoteOAuth1');
-	//var_dump($remoteAll, 'remoteOAuth1');
+	$term = variable_get('pearson_term_id');
+	if (empty($term)){
+		drupal_set_message('Pearson settings must be entered here: ' . l('Visit Pearson Settings (required)', 'admin/settings/pearson_mp'));
+		return;
+	}	
+	
+	$remoteAll = remoteOAuth1('/terms/' . $term . '/courses'); //remotePearson();
+	// check to see if the hash is the same, function returns TRUE if there is new stuff
+	$newCoursesInfo = newHashedInfo('coursesFromTerm' . $term, $remoteAll);
+	if ($newCoursesInfo) variable_set('pearson updateCourseInfo', TRUE); // if there's new stuff to add from courses. need to know final ID too, see below
+	$finalCourseID = '';
 	if (is_array($remoteAll->courses)){ // this helps block warnings
 		foreach ($remoteAll->courses as $k => $v){
 		  // dsm($k, 'k'); // $k->id, ->displayCourseCode, ... title, callNumbers (array), links (array of Objects->href, ->rel)
 		  
 		  // now that we know who to attach to a course, create/update course nodes
 		  $queueCoursesFromTerm->createItem($v);
-		}			
+		  $finalCourseID = $v->id;
+		}
+		// set variable so we know when the last one is processed later, and can turn 'pearson updateCourseInfo' to FALSE
+		variable_set('pearson updateCourseInfo FinalID', $finalCourseID);		
+	}	
+}
+/*
+*	Add hash to custom table we set up in hook_schema in pearson_mp.install
+ *  $desciptions are
+ * 		'coursesFromTerm' . {TermID}
+ * 		'usersInCourse' . {CourseID}
+ */
+function newHashedInfo($description, &$item){
+	$hash = hash("crc32b", $item);
+	// check to see if hash is the same as that in the database
+	$query = db_select('pearson_mp_hashes', 'p');
+	$query->fields('p', array('hash'))->condition('p.description', $description);
+	$result = $query->execute()->fetch();
+	// TODO: this logic could probably be reduced to if(empty($result) || $result->hash != $hash), but keep it for easy debugging
+	if (empty($result)){
+		// never added to db before, add it
+		_add_hash($description, $hash, $item);
+		return TRUE;
+	} else {
+		// found a previous entry in db
+		// see if hashes are the same
+		if ($result->hash == $hash){
+			// everything is the same as the last time we checked
+			watchdog('pearson_mp', 'Nothing has been updated for hash ' . $description);
+			return FALSE;
+		} else {
+			// it's different, go ahead and update stuff
+			// update the hash in the database, and tell calling function that there's new stuff (TRUE)
+			_add_hash($description, $hash, $item);
+			return TRUE;
+		}
 	}
+}
  
-	/*
-	$remoteProf = $remoteAll['prof'];
-    foreach ($remoteProf as $data) {
-      $queueCoursesFromTerm->createItem($data);
-    }
-	 */	
+function _add_hash($description, $hash, &$item){
+	db_merge('pearson_mp_hashes')
+	  ->key(array('description' => $description))
+	  ->fields(array(
+	      'hash' => $hash,
+	      'fulldata' => serialize($item),
+	  ))
+	  ->execute();	
 }
 
 // tell drupal we have a queue to work on during cron
@@ -345,7 +390,14 @@ function PearsonUpdateOrAdd($item){
 		$i++; // iterate
 	}
 	
-	node_save($newNode);		
+	node_save($newNode);
+	
+	// if this is the last one to update according to the variable, set it back to false (see hook_cron for more info)
+	if ($item->id == variable_get('pearson updateCourseInfo FinalID')){
+		variable_set('pearson updateCourseInfo FinalID', '');		
+		variable_set('pearson updateCourseInfo', FALSE);
+		watchdog('pearson_mp', 'Updated final course');		
+	}	
 }
 
 // returns UID of the newly created, or already existing user that's passed in as a parameter
