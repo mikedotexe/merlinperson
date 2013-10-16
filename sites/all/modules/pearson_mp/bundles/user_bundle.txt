@@ -406,6 +406,75 @@ $data = array(
         ),
       ),
     ),
+    'field_pearson_username' => array(
+      'translatable' => '0',
+      'entity_types' => array(),
+      'settings' => array(
+        'max_length' => '255',
+      ),
+      'storage' => array(
+        'type' => 'field_sql_storage',
+        'settings' => array(),
+        'module' => 'field_sql_storage',
+        'active' => '1',
+        'details' => array(
+          'sql' => array(
+            'FIELD_LOAD_CURRENT' => array(
+              'field_data_field_pearson_username' => array(
+                'value' => 'field_pearson_username_value',
+                'format' => 'field_pearson_username_format',
+              ),
+            ),
+            'FIELD_LOAD_REVISION' => array(
+              'field_revision_field_pearson_username' => array(
+                'value' => 'field_pearson_username_value',
+                'format' => 'field_pearson_username_format',
+              ),
+            ),
+          ),
+        ),
+      ),
+      'foreign keys' => array(
+        'format' => array(
+          'table' => 'filter_format',
+          'columns' => array(
+            'format' => 'format',
+          ),
+        ),
+      ),
+      'indexes' => array(
+        'format' => array(
+          0 => 'format',
+        ),
+      ),
+      'field_permissions' => array(
+        'type' => '0',
+      ),
+      'field_name' => 'field_pearson_username',
+      'type' => 'text',
+      'module' => 'text',
+      'active' => '1',
+      'locked' => '0',
+      'cardinality' => '1',
+      'deleted' => '0',
+      'columns' => array(
+        'value' => array(
+          'type' => 'varchar',
+          'length' => '255',
+          'not null' => FALSE,
+        ),
+        'format' => array(
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => FALSE,
+        ),
+      ),
+      'bundles' => array(
+        'user' => array(
+          0 => 'user',
+        ),
+      ),
+    ),
   ),
   'instances' => array(
     'field_pearson_include_cron' => array(
@@ -612,6 +681,40 @@ $data = array(
         'deleted' => '0',
       ),
     ),
+    'field_pearson_username' => array(
+      0 => array(
+        'label' => 'Pearson Username',
+        'widget' => array(
+          'weight' => '4',
+          'type' => 'text_textfield',
+          'module' => 'text',
+          'active' => 1,
+          'settings' => array(
+            'size' => '60',
+          ),
+        ),
+        'settings' => array(
+          'text_processing' => '0',
+          'user_register_form' => 0,
+        ),
+        'display' => array(
+          'default' => array(
+            'label' => 'above',
+            'type' => 'text_default',
+            'settings' => array(),
+            'module' => 'text',
+            'weight' => 10,
+          ),
+        ),
+        'required' => 0,
+        'description' => '',
+        'default_value' => NULL,
+        'field_name' => 'field_pearson_username',
+        'entity_type' => 'user',
+        'bundle' => 'user',
+        'deleted' => '0',
+      ),
+    ),
   ),
   'fieldgroups' => array(
     'group_pearson_group_prof|user|user|form' => (object) array(
@@ -625,9 +728,8 @@ $data = array(
       'table' => 'field_group',
       'type' => 'Normal',
       'export_type' => 1,
-      'disabled' => FALSE,
       'label' => 'Pearson Professor',
-      'weight' => '5',
+      'weight' => '6',
       'children' => array(
         0 => 'field_pearson_include_cron',
         1 => 'field_pearson_prof_password',
@@ -654,9 +756,8 @@ $data = array(
       'table' => 'field_group',
       'type' => 'Normal',
       'export_type' => 1,
-      'disabled' => FALSE,
       'label' => 'Pearson Student',
-      'weight' => '4',
+      'weight' => '5',
       'children' => array(
         0 => 'field_pearson_stu_username',
         1 => 'field_pearson_stu_password',
