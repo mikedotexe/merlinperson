@@ -775,7 +775,17 @@ function remoteOAuth2POSTFile($access){
 //TODO: LEFTOFF
 
 function remoteOAuth2GETAssertion($uid, $route){
-	// first find out if student or professor, then get username and decrypted password, then get token, then make request
+	// get username and decrypted password, then get token, then make request
+	$query = db_select('users', 'u');
+	$query->join('field_data_field_pearson_username', 'f', 'u.uid = f.entity_id');
+	$query->fields('f', array('field_pearson_username_value'))->condition('u.uid', $uid);
+	$result = $query->execute()->fetchAll();
+	
+	if (empty($result)){
+		watchdog('pearson_mp', 'Could not find username for user with id ' . $uid, NULL, WATCHDOG_CRITICAL);
+		return;
+	}
+		
 	$eCMAC = new CryptLib\MAC\Implementation\ECollegeCMAC; 
   
 	//Set up variables for creating the assertion
@@ -784,12 +794,12 @@ function remoteOAuth2GETAssertion($uid, $route){
 	$secret_key       = variable_get('pearson_consumer_secret');     //Campus-specific
 	$client_string    = variable_get('pearson_client_string');     //Campus-specific
 	$application_name = $client_string;       //This data point isn't checked, so we go simple
-	$username 	      = "{username}";         //TODO: User's username in LearningStudio
+	$username 	      = $result[0]->field_pearson_username_value;         // User's username in LearningStudio
 	$timestamp 	      = str_replace('+00:00','Z',gmdate('c')); //This format is important
 	 
 	 
 	//Set up variables needed to make the request of the API 
-	$api_url       = "https://{domain}/token";
+	$api_url       = "https://m-api.ecollege.com/token";
 	$grantType 	   = "assertion";
 	$assertionType = "urn:ecollege:names:moauth:1.0:assertion"; 
 	 
@@ -823,6 +833,7 @@ function remoteOAuth2GETAssertion($uid, $route){
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 	curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
 	curl_setopt($ch, CURLOPT_POSTFIELDS, $post_fields);
+	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // used to be 0 and worked
 	 
 	//execute & get server response;
 	$api_response = curl_exec($ch); 
@@ -832,16 +843,13 @@ function remoteOAuth2GETAssertion($uid, $route){
 	$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 	 
 	// Test if there was a cURL problem (request didn't go through)
-	if($curl_error){
-	 
-		echo "There was a problem making the API Call. cURL problem: $curlError"; 
-	 
+	if($curl_error){	
+		watchdog('pearson_mp', "There was a problem making the API Call. cURL problem: $curl_error", NULL, WATCHDOG_CRITICAL); 	 
 	// Test if there is a 4XX error (request went through but erred). 
-	} else if(intval($http_code / 100) >=4){
-	 
+	} else if(intval($http_code / 100) >=4){	 
 		$decoded_response = json_decode($api_response); 
 		$msg = (is_object($decoded_response) && isset($decoded_response->error->message))?$decoded_response->error->message:"No message reported."; 
-		echo "The API Server responded with ".$http_code.". Message was: $msg";
+		watchdog('pearson_mp', "[remoteOAuth2GETAssertion] The API Server responded with ".$http_code.". Message was: $msg", NULL, WATCHDOG_CRITICAL);
 	 
 	// Else you have a successful response. 
 	} else {
@@ -850,9 +858,9 @@ function remoteOAuth2GETAssertion($uid, $route){
 		$access_token = $decoded_response->access_token; 
 		$expires_in = $decoded_response->expires_in; // seconds 
 	 
-		echo "<b>Access Token:</b> $access_token<br /><br />"; 
-		echo "<b>Expires In:</b> $expires_in<br /><br />"; 
-	 
+		// echo "<b>Access Token:</b> $access_token<br /><br />"; 
+		// echo "<b>Expires In:</b> $expires_in<br /><br />"; 
+		return $decoded_response;	 
 	}	
 }
 
