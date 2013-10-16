@@ -127,8 +127,58 @@ function pearson_mp_cron(){
 		}
 		// set variable so we know when the last one is processed later, and can turn 'pearson updateCourseInfo' to FALSE
 		variable_set('pearson updateCourseInfo FinalID', $finalCourseID);		
-	}	
+	}
+	checkAnnouncements();
 }
+
+/*
+ * Check for announcements
+ * @$IDarray is an array of Pearson Course ID's to check
+ */
+function checkAnnouncements($IDarray = array()){
+	$queueAnnFromCourse = DrupalQueue::get("pearsonAnnouncementFromCourse");
+	if (empty($IDarray)){
+		// want to check all announcements from all courses
+		$query = db_select('node', 'n');
+		$query->join('field_data_field_pearson_course_number', 'c', 'n.nid = c.entity_id');
+		$query->leftjoin('pearson_mp_hashes', 'h', 'c.field_pearson_course_number_value = h.description');
+		$query->fields('c', array('field_pearson_course_number_value'))->fields('h', array('hash'))->condition('type', 'pearson_course');
+		$result = $query->execute()->fetchAll();
+		// dsm($result, 'result');\		
+		foreach ($result as $k => $v) {			
+			$queueAnnFromCourse->createItem($v);
+		}
+	} else {
+		// only check for announcements from a particular course
+		foreach ($IDarray as $cid){
+			$query = db_select('pearson_mp_hashes', 'h');
+			$query->fields('h', array('hash'))->condition('h.description', $cid);
+			$result = $query->execute()->fetchAll();
+			if (empty($result)){
+				$result[0] = new stdClass();
+				$result[0]->hash = NULL;
+			} 
+			$result[0]->field_pearson_course_number_value = $cid;
+			// dsm($result[0], 'result');
+			
+			// add to queue			
+			$queueAnnFromCourse->createItem($result[0]);		
+		}
+	}
+} 
+
+/*
+ * This handles the queue that looks to update/add announcements
+ */
+
+function PearsonAnnouncements($item){
+	$cid = $item->field_pearson_course_number_value;
+	if (empty($cid)) return;
+	watchdog('pearson_mp', 'Working on announcement for Course ' . $cid);
+	
+	// $annData = remoteOAuth1("/courses/$cid/announcements")
+}
+  
 /*
 *	Add hash to custom table we set up in hook_schema in pearson_mp.install
  *  $desciptions are
@@ -180,6 +230,10 @@ function pearson_mp_cron_queue_info() {
     'worker callback' => 'PearsonUpdateOrAdd', //function to call for each item
     'time' => 600, //seconds to spend working on the queue
   );
+  $ret['pearsonAnnouncementFromCourse'] = array(
+    'worker callback' => 'PearsonAnnouncements', //function to call for each item
+    'time' => 600, //seconds to spend working on the queue
+  );
   // $ret['pearsonUserFromCourse'] = array(
     // 'worker callback' => 'PearsonUpdateOrAddUser', //function to call for each item
     // 'time' => 600, //seconds to spend working on the queue
@@ -187,7 +241,7 @@ function pearson_mp_cron_queue_info() {
   return $ret;
 }
 
-function remoteOAuth1($route){
+function remoteOAuth1($route, $ct_urlenc = FALSE){
 	// Set up the variables necessary to make the Request 
 	$method          = 'GET'; 
 	$application_id  = variable_get('pearson_app_id');  //Your Application's ID/Key. Use for all campuses.
@@ -255,7 +309,7 @@ function remoteOAuth1($route){
 		$v = ($k=='realm')?$v:urlencode($v); 
 		$header_parts[] = $k.'="'.$v.'"'; 
 	} 
-	 
+	 	
 	$oauth_http_header = "X-Authorization: OAuth ".implode(',',$header_parts);
 	 	 
 	// Use cURL to make the request 
@@ -265,7 +319,13 @@ function remoteOAuth1($route){
 	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // used to be 0 and worked
 	curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows; U; MSIE 9.0; WIndows NT 9.0; en-US)'); 
 	curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
-	curl_setopt($ch, CURLOPT_HTTPHEADER, array($oauth_http_header)); 
+	if ($ct_urlenc){
+		// add "Content-Type: application/x-www-form-urlencoded" to header as well
+		curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/x-www-form-urlencoded', $oauth_http_header));
+	} else {
+		curl_setopt($ch, CURLOPT_HTTPHEADER, array($oauth_http_header));
+	}
+	 
 	if($method=='POST' || $method=='PUT')
 		curl_setopt($ch, CURLOPT_POSTFIELDS, $post_body);
 	 	 
@@ -289,7 +349,7 @@ function remoteOAuth1($route){
 		$msg.= (is_object($decoded) && isset($decoded->error->errorId) && !empty($decoded->error->errorId))?$decoded->error->errorId:'None provided';  
 	 	watchdog('pearson_mp', $msg . " - The API Server responded with ".$http_code.". Message was:".$info." route:". $route);
 		//dsm($msg, "The API Server responded with ".$http_code.". Message was:"); 
-	 
+	 	return 'error, see log ' . $msg . " - The API Server responded with ".$http_code.". Message was:".$info." route:". $route;
 	// Else you have a successful response. 
 	} else {
 	 
@@ -414,6 +474,14 @@ function PearsonUpdateOrAddUser($item2, $courseID){
 		->condition('p.field_pearson_user_id_value', $item2->id);
 	$result = $query->execute()->fetchAll();
 	
+	// now we need to figure out the pearson userName for this person
+	$userInfo = remoteOAuth1('/users/' . $item2->id);
+	$userName = '';
+	if (is_object($userInfo)){
+		// grab the userName provided by Pearson
+		$userName = $userInfo->users[0]->userName;
+	}
+	
 	// find out which roles to apply
 	// 823 => PROF
 	// 430 => TAST
@@ -434,30 +502,43 @@ function PearsonUpdateOrAddUser($item2, $courseID){
 			$role[variable_get('Pearson Student')] = 'Pearson Student';
 			break;
 	}
+
+	
 	
 	if (empty($result)){
+		// make sure the name does not conflict (name column in users table is key)
+		$query2 = db_select('users', 'u');
+		$query2->fields('u', array('name'))->condition('u.name', $item2->user->firstName . ' ' . $item2->user->lastName);
+		$existingNames = $query2->execute()->fetchAll();
+		$delta = '';
+		if (!empty($existingNames)){
+			$delta = count($existingNames) + 1;
+		}
+		
 		// we create a new user using user_save API
 			// TODO: add specific roles automatically
 		  $password = user_password(8);		 
 		  //set up the user fields
 		  $fields = array(
-		    'name' => $item2->user->firstName . ' ' . $item2->user->lastName,
+		    'name' => $item2->user->firstName . ' ' . $item2->user->lastName . $delta,
 		    'mail' => $item2->user->emailAddress,
 		    'pass' => $password,
 		    'status' => 1,
 		    'init' => 'email address',
 		    'roles' => $role,
 		    'field_pearson_user_id' => array(LANGUAGE_NONE => array(0 => array('value' => $item2->id))),
+		    'field_pearson_username' => array(LANGUAGE_NONE => array(0 => array('value' => $userName))),
 		  ); 
 		 
 		  //the first parameter is left blank so a new user is created
-		  watchdog('pearson_mp', 'Creating new user ' . $item2->user->firstName . ' ' . $item2->user->lastName . ' for course ' . $courseID);
+		  watchdog('pearson_mp', 'Creating new user ' . $item2->user->firstName . ' ' . $item2->user->lastName . ' (' . $userName . ') for course ' . $courseID . ' delta is ' . $delta);
 		  $account = user_save('', $fields);
 		  return $account->uid;	// uid of the newly created user
 	} else {
+		// TODO: revisit this, where we can update values, doesn't seem that important right now
 			// we can choose to update the user information
 			// TODO: add check to see if they have a setting flagged (not yet on settings page)
-			// TODO: revisit this, where we can update values, doesn't seem that important right now		
+					
 		  // $account = user_load($result[0]->uid);
 // 		
 		  // $fields = array(
@@ -482,7 +563,18 @@ function pearson_mp_form_alter(&$form, &$form_state, $form_id){
 
 function pearson_mp_form_user_profile_form_alter(&$form, &$form_state){
 	// dsm(_decryptFromUID(1));
+	$form['#after_build'][] = '_profile_ab';
 	$form['#validate'][] = '_profile_submit';
+}
+
+function _profile_ab(&$form, &$form_state){
+	
+	// $form['group_pearson_group_prof']['field_pearson_prof_password'][0]['value']['#type'] = 'password';
+	// $form['group_pearson_group_prof']['field_pearson_prof_password'][0]['value']['#attributes']['value'] = $form['group_pearson_group_prof']['field_pearson_prof_password'][0]['value']['#value'];
+	// $form['field_pearson_prof_password'][LANGUAGE_NONE][0]['value']['#type'] = 'password';
+	$form['field_pearson_prof_password'][LANGUAGE_NONE][0]['value']['#attributes']['value'] = '(stored in database, you may enter a new password here)';
+	// dsm($form, 'ab');
+	return $form;	
 }
 
 function _profile_submit(&$form, &$form_state){
@@ -491,7 +583,7 @@ function _profile_submit(&$form, &$form_state){
 	$form_state['values']['field_pearson_prof_password'][LANGUAGE_NONE][0]['value'] = bin2hex($enc);
 }
 
-function _decryptFromUID($uid){
+function _decryptFromUID($uid, $role){
 	$query = db_select('users', 'u');
 	$query->join('field_data_field_pearson_prof_password', 'f', 'u.uid = f.entity_id');
 	$query->fields('f', array('field_pearson_prof_password_value'));
@@ -678,6 +770,90 @@ function remoteOAuth2POSTFile($access){
 		// dsm($decoded_response);  
 		return $decoded_response;
 	}
+}
+
+//TODO: LEFTOFF
+
+function remoteOAuth2GETAssertion($uid, $route){
+	// first find out if student or professor, then get username and decrypted password, then get token, then make request
+	$eCMAC = new CryptLib\MAC\Implementation\ECollegeCMAC; 
+  
+	//Set up variables for creating the assertion
+	$application_id   = variable_get('pearson_app_id');    //Your Application's ID/Key. Use for all campuses.
+	$key_moniker      = variable_get('pearson_consumer_key');;  //Campus-specific 
+	$secret_key       = variable_get('pearson_consumer_secret');     //Campus-specific
+	$client_string    = variable_get('pearson_client_string');     //Campus-specific
+	$application_name = $client_string;       //This data point isn't checked, so we go simple
+	$username 	      = "{username}";         //TODO: User's username in LearningStudio
+	$timestamp 	      = str_replace('+00:00','Z',gmdate('c')); //This format is important
+	 
+	 
+	//Set up variables needed to make the request of the API 
+	$api_url       = "https://{domain}/token";
+	$grantType 	   = "assertion";
+	$assertionType = "urn:ecollege:names:moauth:1.0:assertion"; 
+	 
+	//Assemble the Assertion string following this pattern (see documentation for details)
+	//$assertion = '{client_name}|{key_moniker}|{client_id}|{client_string}|{username}|{timestamp}';
+	$assertion = "$application_name|$key_moniker|$application_id|$client_string|$username|$timestamp";
+	 
+	// Now get the CMAC hash of the assertion (the signature)
+	try{
+	 
+		//Pass Assertion and Key to the generateEcollegeCMAC method. 
+		//This assumes the Assertion string has NOT been binary encoded. This method will pack() the 
+		//string for you, hash it, and then bin2hex it. 
+		$cmac = $eCMAC->generateECollegeCMAC($assertion,$secret_key); 
+	 
+		//$cmac is now equal to something like 989d5631fc2a4cd831ba84e6c7d39478
+	 
+	} catch(Exception $e){ 
+		exit($e->getMessage());  
+	} 
+	 
+	//Append the signature hash to the Assertion 
+	$assertion .= '|'.$cmac; 
+	 
+	//Set up the body of the POST request
+	$post_fields = "grant_type=".$grantType."&assertion_type=".$assertionType."&assertion=".$assertion;  
+	 
+	//Set up cURL Transaction
+	$ch = curl_init();
+	curl_setopt($ch, CURLOPT_URL, $api_url);
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+	curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+	curl_setopt($ch, CURLOPT_POSTFIELDS, $post_fields);
+	 
+	//execute & get server response;
+	$api_response = curl_exec($ch); 
+	 
+	//capture errors or other status codes
+	$curl_error = curl_error($ch);
+	$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+	 
+	// Test if there was a cURL problem (request didn't go through)
+	if($curl_error){
+	 
+		echo "There was a problem making the API Call. cURL problem: $curlError"; 
+	 
+	// Test if there is a 4XX error (request went through but erred). 
+	} else if(intval($http_code / 100) >=4){
+	 
+		$decoded_response = json_decode($api_response); 
+		$msg = (is_object($decoded_response) && isset($decoded_response->error->message))?$decoded_response->error->message:"No message reported."; 
+		echo "The API Server responded with ".$http_code.". Message was: $msg";
+	 
+	// Else you have a successful response. 
+	} else {
+	 
+		$decoded_response = json_decode($api_response); 
+		$access_token = $decoded_response->access_token; 
+		$expires_in = $decoded_response->expires_in; // seconds 
+	 
+		echo "<b>Access Token:</b> $access_token<br /><br />"; 
+		echo "<b>Expires In:</b> $expires_in<br /><br />"; 
+	 
+	}	
 }
 
 
