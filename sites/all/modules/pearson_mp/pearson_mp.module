@@ -1077,4 +1077,6 @@ function classesByUID($uid){
 	  ->condition('n.type', 'pearson_course')
 	  ->condition('b.field_pearson_course_number_value', $findCourseID);
 	$result = $query->execute()->fetchAll();
-	*/
+	*/	
+
+

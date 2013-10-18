@@ -1,0 +1,8 @@
+name = Announcement Resource
+description = Announcement resource implementation for Event Contract
+package = "Zpearson"
+
+core = 7.x
+
+files[] = annresource.inc
+files[] = anneresource.module

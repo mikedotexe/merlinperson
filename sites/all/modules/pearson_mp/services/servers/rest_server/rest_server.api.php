@@ -51,10 +51,12 @@ function hook_rest_server_response_formatters_alter(&$formatters) {
  *  Arguments of the controller.
  */
 function hook_rest_server_execute_errors_alter(&$error, $controller, $arguments) {
+/*
   $error_code = $error['code'];
   if (user_is_logged_in() && $error_code == 401) {
     global $user;
     $error['header_message'] = '403 ' . t('Access denied for user @user',
       array('@user' => $user->name));
   }
+  */
 }
