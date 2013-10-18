@@ -111,7 +111,7 @@ function pearson_mp_cron(){
 		return;
 	}	
 	
-	$remoteAll = remoteOAuth1('/terms/' . $term . '/courses'); //remotePearson();
+	$remoteAll = remoteOAuth1('/terms/' . $term . '/courses');
 	// check to see if the hash is the same, function returns TRUE if there is new stuff
 	$remoteAllSer = serialize($remoteAll);
 	$newCoursesInfo = newHashedInfo('coursesFromTerm' . $term, $remoteAllSer);
@@ -586,30 +586,6 @@ function _decryptFromUID($uid, $role){
 	return $dec;
 }
  */
-
-// TODO: not used
-// this fetches the information from Pearson WSOD (NOT BEING USED)
-function remotePearson(){
-	$ret = array();
-	// get list of professor id's that are tagged with "include me in cron"
-	//		prof => id
-	$query = db_select('users', 'n');
-	$query->join('field_data_field_pearson_include_cron', 'b', 'n.uid = b.entity_id');
-	$query->join('users_roles', 'c', 'n.uid = c.uid');
-	$query->join('role', 'r', 'c.rid = r.rid');
-	$query
-	  ->fields('n', array('uid', 'mail'))
-	  ->condition('b.field_pearson_include_cron_value', 1)
-	  ->condition('r.name', 'prof');
-	$result = $query->execute()->fetchAll();
-	foreach ($result as $key => $value) {
-		// $ret['prof'][$value->uid] = $value->mail;
-		$ret['prof'][] = array('uid' => $value->uid, 'email' => $value->mail);		
-	}
-	//dsm($result, 'result');		
-	// dsm($ret, 'return value');
-	return $ret;
-}
 
 // code to create a course node programmatically
 /* 
