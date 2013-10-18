@@ -563,26 +563,19 @@ function pearson_mp_form_alter(&$form, &$form_state, $form_id){
 
 function pearson_mp_form_user_profile_form_alter(&$form, &$form_state){
 	// dsm(_decryptFromUID(1));
-	$form['#after_build'][] = '_profile_ab';
-	$form['#validate'][] = '_profile_submit';
-}
-
-function _profile_ab(&$form, &$form_state){
-	
-	// $form['group_pearson_group_prof']['field_pearson_prof_password'][0]['value']['#type'] = 'password';
-	// $form['group_pearson_group_prof']['field_pearson_prof_password'][0]['value']['#attributes']['value'] = $form['group_pearson_group_prof']['field_pearson_prof_password'][0]['value']['#value'];
-	// $form['field_pearson_prof_password'][LANGUAGE_NONE][0]['value']['#type'] = 'password';
-	$form['field_pearson_prof_password'][LANGUAGE_NONE][0]['value']['#attributes']['value'] = '(stored in database, you may enter a new password here)';
-	// dsm($form, 'ab');
-	return $form;	
+	// the below used to do the encryption
+	// $form['#validate'][] = '_profile_submit';
 }
 
 function _profile_submit(&$form, &$form_state){
 	// dsm($form_state, 'fs');
-	$enc = encrypt($form_state['values']['field_pearson_prof_password'][LANGUAGE_NONE][0]['value']);
-	$form_state['values']['field_pearson_prof_password'][LANGUAGE_NONE][0]['value'] = bin2hex($enc);
+	// kept commented out in case I want to use encryption later
+	// $enc = encrypt($form_state['values']['field_pearson_prof_password'][LANGUAGE_NONE][0]['value']);
+	// $form_state['values']['field_pearson_prof_password'][LANGUAGE_NONE][0]['value'] = bin2hex($enc);
 }
 
+/*
+ * good idea of how to use encryption, although not needing it now
 function _decryptFromUID($uid, $role){
 	$query = db_select('users', 'u');
 	$query->join('field_data_field_pearson_prof_password', 'f', 'u.uid = f.entity_id');
@@ -592,6 +585,7 @@ function _decryptFromUID($uid, $role){
 	$dec = decrypt($bin);
 	return $dec;
 }
+ */
 
 // TODO: not used
 // this fetches the information from Pearson WSOD (NOT BEING USED)
@@ -660,6 +654,8 @@ $query->leftJoin('field_data_field_pearson_prof_courses', 'c', 'n.nid = c.entity
 //---------------------------------------------------
 // curl stuff
 
+/*
+* commented out because we'll use assertion, and we dont have the field_pearson_prof fields anymore
 function remoteOAuth2Tokens($uid = NULL, $u = NULL, $p = NULL){
 
 	// in this case we have the uid and the email of the professor
@@ -723,6 +719,7 @@ function remoteOAuth2Tokens($uid = NULL, $u = NULL, $p = NULL){
 		}			
 	// }
 }
+*/
 
 function remoteOAuth2POSTFile($access){
 	// set up header
