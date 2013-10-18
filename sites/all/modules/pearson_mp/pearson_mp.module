@@ -128,7 +128,7 @@ function pearson_mp_cron(){
 		// set variable so we know when the last one is processed later, and can turn 'pearson updateCourseInfo' to FALSE
 		variable_set('pearson updateCourseInfo FinalID', $finalCourseID);		
 	}
-	checkAnnouncements();
+	// checkAnnouncements();
 }
 
 /*
