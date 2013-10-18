@@ -3,64 +3,6 @@ $data = array(
     'user' => NULL,
   ),
   'fields' => array(
-    'field_pearson_include_cron' => array(
-      'translatable' => '0',
-      'entity_types' => array(),
-      'settings' => array(
-        'allowed_values' => array(
-          0 => 'Do not pull my course information',
-          1 => 'Update my course information automatically',
-        ),
-        'allowed_values_function' => '',
-      ),
-      'storage' => array(
-        'type' => 'field_sql_storage',
-        'settings' => array(),
-        'module' => 'field_sql_storage',
-        'active' => '1',
-        'details' => array(
-          'sql' => array(
-            'FIELD_LOAD_CURRENT' => array(
-              'field_data_field_pearson_include_cron' => array(
-                'value' => 'field_pearson_include_cron_value',
-              ),
-            ),
-            'FIELD_LOAD_REVISION' => array(
-              'field_revision_field_pearson_include_cron' => array(
-                'value' => 'field_pearson_include_cron_value',
-              ),
-            ),
-          ),
-        ),
-      ),
-      'foreign keys' => array(),
-      'indexes' => array(
-        'value' => array(
-          0 => 'value',
-        ),
-      ),
-      'field_permissions' => array(
-        'type' => '0',
-      ),
-      'field_name' => 'field_pearson_include_cron',
-      'type' => 'list_boolean',
-      'module' => 'list',
-      'active' => '1',
-      'locked' => '0',
-      'cardinality' => '1',
-      'deleted' => '0',
-      'columns' => array(
-        'value' => array(
-          'type' => 'int',
-          'not null' => FALSE,
-        ),
-      ),
-      'bundles' => array(
-        'user' => array(
-          0 => 'user',
-        ),
-      ),
-    ),
     'field_pearson_user_id' => array(
       'translatable' => '0',
       'entity_types' => array(),
@@ -201,42 +143,6 @@ $data = array(
     ),
   ),
   'instances' => array(
-    'field_pearson_include_cron' => array(
-      0 => array(
-        'label' => 'Include me in cron',
-        'widget' => array(
-          'weight' => '5',
-          'type' => 'options_onoff',
-          'module' => 'options',
-          'active' => 1,
-          'settings' => array(
-            'display_label' => 0,
-          ),
-        ),
-        'settings' => array(
-          'user_register_form' => 0,
-        ),
-        'display' => array(
-          'default' => array(
-            'label' => 'above',
-            'type' => 'hidden',
-            'weight' => '0',
-            'settings' => array(),
-          ),
-        ),
-        'required' => 0,
-        'description' => '',
-        'default_value' => array(
-          0 => array(
-            'value' => 0,
-          ),
-        ),
-        'field_name' => 'field_pearson_include_cron',
-        'entity_type' => 'user',
-        'bundle' => 'user',
-        'deleted' => '0',
-      ),
-    ),
     'field_pearson_user_id' => array(
       0 => array(
         'label' => 'Pearson User ID',
