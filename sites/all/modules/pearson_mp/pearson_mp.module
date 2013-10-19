@@ -128,7 +128,7 @@ function pearson_mp_cron(){
 		// set variable so we know when the last one is processed later, and can turn 'pearson updateCourseInfo' to FALSE
 		variable_set('pearson updateCourseInfo FinalID', $finalCourseID);		
 	}
-	// checkAnnouncements();
+	checkAnnouncements();
 }
 
 /*
@@ -173,10 +173,95 @@ function checkAnnouncements($IDarray = array()){
 
 function PearsonAnnouncements($item){
 	$cid = $item->field_pearson_course_number_value;
-	if (empty($cid)) return;
-	watchdog('pearson_mp', 'Working on announcement for Course ' . $cid);
+	if (empty($cid)) return;	
 	
 	// $annData = remoteOAuth1("/courses/$cid/announcements")
+	
+	// get professor's username
+	$query = db_select('field_data_field_pearson_course_number', 'c');
+	$query->join('field_data_field_pearson_course_users', 'u', 'c.entity_id = u.entity_id');
+	$query->join('users', 'd', 'u.field_pearson_course_users_target_id = d.uid');
+	$query->join('users_roles', 'ur', 'd.uid = ur.uid');
+	$query->join('role', 'r', 'ur.rid = r.rid');
+	$query->join('field_data_field_pearson_username', 'n', 'd.uid = n.entity_id');
+	$query->fields('n', array('field_pearson_username_value'))->condition('r.name', 'Pearson Professor')->condition('c.field_pearson_course_number_value', $cid);
+	$res = $query->execute()->fetchAll();
+	
+	if (empty($res)){
+		watchdog('pearson_mp', '[PearsonAnnouncements] Could not find username for teacher in course ' . $cid, NULL, WATCHDOG_CRITICAL);
+		return;
+	}
+	
+	$uname = $res[0]->field_pearson_username_value;
+	
+	// now that we have the professor's username, we can use OAuth2 assertion to get  
+	$accessInfo = remoteOAuth2GETAssertion($uname);
+	$accessToken = $accessInfo->access_token;
+	
+	// get announcements for course
+	$announcements = remoteOAuth2GET($accessToken, '/courses/' . $cid . '/announcements');
+	watchdog('pearson_mp', 'Announcements for Course ' . $cid . ' (' . count($announcements->announcements . ' total)'));
+	foreach ($announcements->announcements as $ann){
+		updateOrAddAnnouncement($ann, $cid);
+	}
+	
+}
+
+function updateOrAddAnnouncement($item, $cid){
+	// see if we have a node with that Pearson ID (not Drupal nid, or Node ID)
+	// if so, return the nid, if not, return blank
+	$findAnnID = $item->id;
+	$query = db_select('node', 'n');
+	$query->join('field_data_field_pearson_ann_id', 'b', 'n.nid = b.entity_id');
+	$query
+	  ->fields('n', array('nid', 'vid'))
+	  ->condition('n.type', 'pearson_announcement')
+	  ->condition('b.field_pearson_ann_id_value', $findAnnID);
+	$result = $query->execute()->fetchAll();
+	  		  			
+	$newNode = (object) NULL;
+	$newNode->type = 'pearson_announcement';
+	$newNode->uid = 1;
+	$newNode->changed = strtotime("now");
+	$newNode->status = 1;
+	$newNode->comment = 0;
+	$newNode->promote = 0;
+	$newNode->moderate = 0;
+	$newNode->sticky = 0;
+	$newNode->language = 'und';
+
+	$newNode->field_pearson_ann_id[LANGUAGE_NONE][0]['value'] = $findAnnID;
+	$newNode->field_pearson_ann_subject[LANGUAGE_NONE][0]['value'] = $item->subject;
+	$newNode->field_pearson_ann_text[LANGUAGE_NONE][0]['value'] = $item->text;
+	$newNode->field_pearson_ann_submitter[LANGUAGE_NONE][0]['value'] = $item->submitter;
+	$newNode->field_pearson_ann_startdisplayda[LANGUAGE_NONE][0]['value'] = $item->startDisplayDate;
+	$newNode->field_pearson_ann_enddisplaydate[LANGUAGE_NONE][0]['value'] = $item->endDisplayDate;
+	$newNode->title = $item->subject; // TODO: somewhat redundant
+		
+	// if we are updating this node (if the Course ID already exists in the system)
+	if (!empty($result)){
+		// we're updating this node
+		//dsm('not empty');
+		$newNode->nid = $result[0]->nid;
+		$newNode->vid = $result[0]->vid; // will throw notice without this line
+		// $newNode->is_new = FALSE;
+	} else {
+		// we're creating this node
+		$newNode->created = strtotime("now");	
+		$newNode->is_new = TRUE;	
+	}
+	
+	// get the Drupal nid of the course it needs to point to, be a child of
+	$query = db_select('field_data_field_pearson_course_number', 'p');
+	$query->join('node', 'n', 'n.nid = p.entity_id');
+	$query->fields('n', array('nid'))->condition('p.field_pearson_course_number_value', $cid);
+	$result = $query->execute()->fetchAll();
+	$nid = $result[0]->nid;	
+	
+	$newNode->field_pearson_ann_course[LANGUAGE_NONE][0]['target_id'] = $nid; // add this to the entity reference for course
+	$newNode->field_pearson_ann_course[LANGUAGE_NONE][0]['target_type'] = 'node'; // required	
+	
+	node_save($newNode);	
 }
   
 /*
@@ -337,7 +422,7 @@ function remoteOAuth1($route, $ct_urlenc = FALSE){
 	 
 	// Test if there was a cURL problem (request didn't go through)
 	if($curlError){
-	 	 watchdog('pearson_mp', $curlError . " - There was a problem making the API Call. cURL problem");
+	 	 watchdog('pearson_mp', $curlError . " - There was a problem making the API Call. cURL problem", NULL, WATCHDOG_CRITICAL);
 		 //dsm($curlError, "There was a problem making the API Call. cURL problem"); 
 	 
 	// Test if there is a 4XX error (request went through but erred). 
@@ -347,7 +432,7 @@ function remoteOAuth1($route, $ct_urlenc = FALSE){
 		$msg = (is_object($decoded) && isset($decoded->error->message))?$decoded->error->message:"No message reported.";
 		$msg.= " Error ID: "; 
 		$msg.= (is_object($decoded) && isset($decoded->error->errorId) && !empty($decoded->error->errorId))?$decoded->error->errorId:'None provided';  
-	 	watchdog('pearson_mp', $msg . " - The API Server responded with ".$http_code.". Message was:".$info." route:". $route);
+	 	watchdog('pearson_mp', $msg . " - The API Server responded with ".$http_code.". Message was:".$info." route:". $route, NULL, WATCHDOG_CRITICAL);
 		//dsm($msg, "The API Server responded with ".$http_code.". Message was:"); 
 	 	return 'error, see log ' . $msg . " - The API Server responded with ".$http_code.". Message was:".$info." route:". $route;
 	// Else you have a successful response. 
@@ -728,7 +813,7 @@ function remoteOAuth2POSTFile($access){
 	 
 	// Test if there was a cURL problem (request didn't go through)
 	if($curlError){
-	 	 watchdog('pearson_mp', $curlError . " - There was a problem making the API Call. cURL problem in remoteOAuth2POST");
+	 	 watchdog('pearson_mp', $curlError . " - There was a problem making the API Call. cURL problem in remoteOAuth2POST", NULL, WATCHDOG_CRITICAL);
 	// Test if there is a 4XX error (request went through but erred). 
 	} else if(intval($http_code / 100) >=4){
 	 
@@ -736,7 +821,7 @@ function remoteOAuth2POSTFile($access){
 		$msg = (is_object($decoded) && isset($decoded->error->message))?$decoded->error->message:"No message reported.";
 		$msg.= " Error ID: "; 
 		$msg.= (is_object($decoded) && isset($decoded->error->errorId) && !empty($decoded->error->errorId))?$decoded->error->errorId:'None provided';  
-	 	watchdog('pearson_mp', $msg . " - The API Server responded with ".$http_code.". Found in remoteOAuth2POST");
+	 	watchdog('pearson_mp', $msg . " - The API Server responded with ".$http_code.". Found in remoteOAuth2POST", NULL, WATCHDOG_CRITICAL);
 	// Else you have a successful response. 
 	} else {	 
 		$decoded_response = json_decode($api_response); 
@@ -745,19 +830,55 @@ function remoteOAuth2POSTFile($access){
 	}
 }
 
-//TODO: LEFTOFF
-
-function remoteOAuth2GETAssertion($uid, $route){
-	// get username and decrypted password, then get token, then make request
-	$query = db_select('users', 'u');
-	$query->join('field_data_field_pearson_username', 'f', 'u.uid = f.entity_id');
-	$query->fields('f', array('field_pearson_username_value'))->condition('u.uid', $uid);
-	$result = $query->execute()->fetchAll();
+function remoteOAuth2GET($accessToken, $route){
+	// set up header
+	$header = 'X-Authorization: Access_Token access_token=' . $accessToken;
+	$curl = curl_init();
 	
-	if (empty($result)){
-		watchdog('pearson_mp', 'Could not find username for user with id ' . $uid, NULL, WATCHDOG_CRITICAL);
-		return;
+	curl_setopt_array($curl, array(
+	    CURLOPT_RETURNTRANSFER => 1,
+	    CURLOPT_URL => 'https://m-api.ecollege.com' . $route,
+	    CURLOPT_HTTPHEADER => array('Content-Type: application/x-www-form-urlencoded', $header),
+	    CURLOPT_SSL_VERIFYPEER => 0
+	));
+		 	
+	// Execute & get variables
+	$api_response = curl_exec($curl);
+	$curlError = curl_error($curl);
+	$info = curl_getinfo($curl); 
+	$http_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+	curl_close($curl);	
+	 
+	// Test if there was a cURL problem (request didn't go through)
+	if($curlError){
+	 	 watchdog('pearson_mp', $curlError . " - There was a problem making the API Call. cURL problem in remoteOAuth2GET", NULL, WATCHDOG_CRITICAL);
+	// Test if there is a 4XX error (request went through but erred). 
+	} else if(intval($http_code / 100) >=4){
+	 
+		$decoded = json_decode($api_response); 
+		$msg = (is_object($decoded) && isset($decoded->error->message))?$decoded->error->message:"No message reported.";
+		$msg.= " Error ID: "; 
+		$msg.= (is_object($decoded) && isset($decoded->error->errorId) && !empty($decoded->error->errorId))?$decoded->error->errorId:'None provided';  
+	 	watchdog('pearson_mp', $msg . " - The API Server responded with ".$http_code.". Found in remoteOAuth2GET", NULL, WATCHDOG_CRITICAL);
+	// Else you have a successful response. 
+	} else {	 
+		$decoded_response = json_decode($api_response); 
+		// dsm($decoded_response);  
+		return $decoded_response;
 	}
+}
+
+function remoteOAuth2GETAssertion($uname){
+	// get username and decrypted password, then get token, then make request TODO: can get rid of this, but may want to use it later
+	// $query = db_select('users', 'u');
+	// $query->join('field_data_field_pearson_username', 'f', 'u.uid = f.entity_id');
+	// $query->fields('f', array('field_pearson_username_value'))->condition('u.uid', $uid);
+	// $result = $query->execute()->fetchAll();
+// 	
+	// if (empty($result)){
+		// watchdog('pearson_mp', 'Could not find username for user with id ' . $uid, NULL, WATCHDOG_CRITICAL);
+		// return;
+	// }
 		
 	$eCMAC = new CryptLib\MAC\Implementation\ECollegeCMAC; 
   
@@ -767,7 +888,7 @@ function remoteOAuth2GETAssertion($uid, $route){
 	$secret_key       = variable_get('pearson_consumer_secret');     //Campus-specific
 	$client_string    = variable_get('pearson_client_string');     //Campus-specific
 	$application_name = $client_string;       //This data point isn't checked, so we go simple
-	$username 	      = $result[0]->field_pearson_username_value;         // User's username in LearningStudio
+	$username 	      = $uname; //$result[0]->field_pearson_username_value;         // User's username in LearningStudio
 	$timestamp 	      = str_replace('+00:00','Z',gmdate('c')); //This format is important
 	 
 	 
