@@ -200,7 +200,7 @@ function PearsonAnnouncements($item){
 	
 	// get announcements for course
 	$announcements = remoteOAuth2GET($accessToken, '/courses/' . $cid . '/announcements');
-	watchdog('pearson_mp', 'Announcements for Course ' . $cid . ' (' . count($announcements->announcements . ' total)'));
+	watchdog('pearson_mp', 'Announcements for Course ' . $cid . ' (' . count($announcements->announcements) . ' total)');
 	foreach ($announcements->announcements as $ann){
 		updateOrAddAnnouncement($ann, $cid);
 	}
