@@ -97,6 +97,10 @@ function _pearson_settings($form, &$form_state) {
   );
   
   // begin adding links
+  $defaultsLinks = variable_get('names_fieldset');
+  $valsSet = FALSE;
+  if (!empty($defaultsLinks)) $valsSet = TRUE;
+  // dsm($defaultsLinks, 'default links');
   
   $form['#tree'] = TRUE;
   $form['names_fieldset'] = array(
@@ -111,11 +115,20 @@ function _pearson_settings($form, &$form_state) {
   // $form_state['num_names'] to determine the number of textfields to build.
   if (empty($form_state['num_names'])) {
     $form_state['num_names'] = 1;
+	if ($valsSet) $form_state['num_names'] = count($defaultsLinks['pearson_link']);	  	
   }
+  
+	  
   for ($i = 0; $i < $form_state['num_names']; $i++) {
-    $form['names_fieldset']['name'][$i] = array(
+    $form['names_fieldset']['pearson_linkdesc'][$i] = array(
       '#type' => 'textfield',
-      '#title' => t('Link'),
+      '#title' => t($i+1 . '. Description'),
+      '#default_value' => ($valsSet) ? $defaultsLinks['pearson_linkdesc'][$i] : '',
+    );
+    $form['names_fieldset']['pearson_link'][$i] = array(
+      '#type' => 'textfield',
+      '#title' => t($i+1 . '. Link'),
+	  '#default_value' => ($valsSet) ? $defaultsLinks['pearson_link'][$i] : '',      
     );
   }
   $form['names_fieldset']['add_name'] = array(
@@ -1278,6 +1291,22 @@ function pearson_mp_user_view($account, $view_mode, $langcode){
 	 '#type' => 'markup',
 	 '#markup' => "<h2>Role(s): $printedRoles</h2>",
 	);
+	$links = array();
+	$fromSettings = variable_get('names_fieldset');
+	dsm($fromSettings, 'fs');
+	if (!empty($fromSettings)){
+		// there are links to add
+		for ($i=0; $i < count($fromSettings['pearson_linkdesc']); $i++) { 
+			$links[] = l($fromSettings['pearson_linkdesc'][$i], $fromSettings['pearson_link'][$i], array('attributes' => array('target' => '_blank')));
+		}
+		$bred = implode('<br/>', $links);
+		$account->content['common_links'] = array(
+		 '#type' => 'markup',
+		 '#markup' => "<h3>Common Link(s):<h3/> $bred",
+		);
+	}
+	
+
 	
 	// find all classes associated with this user, embed views for each
 	$classIDs = classesByUID(arg(1));
