@@ -113,15 +113,16 @@ function _pearson_course_entry() {
 	$body['webEntry'] = array('userId' => (int) $userID, 'courseId' => (int) $courseID, 'exitUrl' => 'http://www.ecollege.com', 'logoutUrl' => 'http://code.educationalpartner.com', "courseReturnUrl" => "http://www.mikedotexe.com");
 	$body = json_encode($body);	
 	
-	dsm($body, 'body');
+	// dsm($body, 'body');
 	
 	$access = remoteOAuth2GETAssertion($userName);
 	// dsm($access, 'access');
 	$ceObj = remoteOAuth2POST($access->access_token, 'lsEntry/course', $body);
-	dsm($ceObj, 'course entry object');
+	// dsm($ceObj, 'course entry object');
+	$url = $ceObj->lsEntry->entryUrl;
 	
-	// drupal_goto('user/1');
-	return '<div>' . 'mike' . '</div><br /><div>' . 'here' . '</div>';
+	drupal_goto($url);
+	// return '<div>' . 'mike' . '</div><br /><div>' . 'here' . '</div>';
 }
 
 function pearson_mp_permission() {
@@ -1199,7 +1200,7 @@ function _import_rules(){
 			}else{
 				$error = 'No rules_ui_import_form_validate function found, rules installation cannot proceed.';
 				watchdog('pearson_mp', $error, NULL, WATCHDOG_CRITICAL);
-				dsm($error);
+				// dsm($error);
 			}	 			
 		}
 	}
@@ -1225,9 +1226,11 @@ function pearson_mp_user_view($account, $view_mode, $langcode){
 		$classNode = node_load($classIDs[$i]->entity_id);
 		// dsm($classNode, 'classNode');
 		$pearsonCID = $classNode->field_pearson_course_number[LANGUAGE_NONE][0]['value'];
+		$pearsonCC = $classNode->field_pearson_course_code[LANGUAGE_NONE][0]['value'];
 		$pearsonUname = $account->field_pearson_username[LANGUAGE_NONE][0]['value'];
 		$pearsonUID = $account->field_pearson_user_id[LANGUAGE_NONE][0]['value'];
-		$view .= l('Enter here', 'course-entry', array('query' => array('UserID' => $pearsonUID, 'UserName' => $pearsonUname, 'CourseID' => $pearsonCID), 'html' => TRUE, 'attributes' => array('target' => '_blank')));
+		
+		$view .= l('Course Entry for ' . $pearsonCC, 'course-entry', array('query' => array('UserID' => $pearsonUID, 'UserName' => $pearsonUname, 'CourseID' => $pearsonCID), 'html' => TRUE, 'attributes' => array('target' => '_blank')));
 				
 		$account->content['view' . $i] = array(
 		 '#type' => 'markup',
