@@ -1267,7 +1267,7 @@ function pearson_mp_node_view($node, $view_mode){
 	// dsm($view_mode, '$view_mode');
 	if ($node->type == 'pearson_course'){
 		// add the Announcement view to the bottom
-		$view = '';
+		$view = '<hr/>';
 		$annView = views_embed_view('pearson_announcements', 'page', $node->nid);
 		if (strpos($annView, 'view-content')){
 			// we have results
