@@ -1206,7 +1206,7 @@ function _import_rules(){
 }
 
 function pearson_mp_user_view($account, $view_mode, $langcode){
-	dsm($account, 'account');
+	// dsm($account, 'account');
 	$roles = $account->roles;
 	unset($roles[2]);
 	$printedRoles = implode(', ', $roles);
