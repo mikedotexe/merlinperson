@@ -1263,8 +1263,25 @@ function pearson_mp_user_view($account, $view_mode, $langcode){
 }
 
 function pearson_mp_node_view($node, $view_mode){
-	dsm($node, 'node');
-	dsm($view_mode, '$view_mode');
+	// dsm($node, 'node');
+	// dsm($view_mode, '$view_mode');
+	if ($node->type == 'pearson_course'){
+		// add the Announcement view to the bottom
+		$view = '';
+		$annView = views_embed_view('pearson_announcements', 'page', $node->nid);
+		if (strpos($annView, 'view-content')){
+			// we have results
+			$view .= '<h3>Announcement(s)</h3>' . $annView;
+		} else{
+			$view .= '<h3>No Announcements</h3>';
+		}
+		$node->content['viewAnn'] = array(
+		 '#type' => 'markup',
+		 '#weight' => 100,
+		 '#markup' => $view,
+		);						
+	}
+	return $node;
 }
 
 // returns an array like this: 0->entity_id, 1->entity_id
