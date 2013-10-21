@@ -37,6 +37,13 @@ function pearson_mp_menu(){
     'access arguments' => array('administer pearson settings'),
     'type' => MENU_NORMAL_ITEM,
    );    
+   
+  $items['course-entry'] = array(
+    'title' => 'Course Entry',
+    'description' => 'Enter course',
+    'page callback' => '_pearson_course_entry',
+    'access arguments' => array('access content')
+   );    
     
   return $items;
 }
@@ -76,10 +83,45 @@ function _pearson_settings() {
     '#default_value' => variable_get('pearson_consumer_secret'),
     '#required' => TRUE,
   );
+  $form['pearson_principal'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Principal'),
+    '#default_value' => variable_get('pearson_principal'),
+    '#required' => TRUE,
+  );
+  $form['pearson_principal_shared'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Principal Shared Secret'),
+    '#default_value' => variable_get('pearson_principal_shared'),
+    '#required' => TRUE,
+  );
   
   // TODO: add submit button to reset all bundles
 
   return system_settings_form($form);
+}
+
+function _pearson_course_entry() {
+	// get the UserID, CourseID
+	$userID = $_GET['UserID'];
+	$userName = $_GET['UserName'];
+	$courseID = $_GET['CourseID'];
+	
+	// $body = '{"webEntry":{"userId":' . $userID . ',"courseId":' . $courseID . ',"exitUrl":"http:\/\/www.ecollege.com","logoutUrl":"http:\/\/code.educationalpartner.com","courseReturnUrl":"http:\/\/www.mikedotexe.com"}}';
+	
+	$body = array();
+	$body['webEntry'] = array('userId' => (int) $userID, 'courseId' => (int) $courseID, 'exitUrl' => 'http://www.ecollege.com', 'logoutUrl' => 'http://code.educationalpartner.com', "courseReturnUrl" => "http://www.mikedotexe.com");
+	$body = json_encode($body);	
+	
+	dsm($body, 'body');
+	
+	$access = remoteOAuth2GETAssertion($userName);
+	// dsm($access, 'access');
+	$ceObj = remoteOAuth2POST($access->access_token, 'lsEntry/course', $body);
+	dsm($ceObj, 'course entry object');
+	
+	// drupal_goto('user/1');
+	return '<div>' . 'mike' . '</div><br /><div>' . 'here' . '</div>';
 }
 
 function pearson_mp_permission() {
@@ -716,7 +758,7 @@ $query->leftJoin('field_data_field_pearson_prof_courses', 'c', 'n.nid = c.entity
 // curl stuff
 
 /*
-* commented out because we'll use assertion, and we dont have the field_pearson_prof fields anymore
+ commented out because we'll use assertion, and we dont have the field_pearson_prof fields anymore
 function remoteOAuth2Tokens($uid = NULL, $u = NULL, $p = NULL){
 
 	// in this case we have the uid and the email of the professor
@@ -813,7 +855,7 @@ function remoteOAuth2POSTFile($access){
 	 
 	// Test if there was a cURL problem (request didn't go through)
 	if($curlError){
-	 	 watchdog('pearson_mp', $curlError . " - There was a problem making the API Call. cURL problem in remoteOAuth2POST", NULL, WATCHDOG_CRITICAL);
+	 	 watchdog('pearson_mp', $curlError . " - There was a problem making the API Call. cURL problem in remoteOAuth2POSTFile", NULL, WATCHDOG_CRITICAL);
 	// Test if there is a 4XX error (request went through but erred). 
 	} else if(intval($http_code / 100) >=4){
 	 
@@ -821,7 +863,7 @@ function remoteOAuth2POSTFile($access){
 		$msg = (is_object($decoded) && isset($decoded->error->message))?$decoded->error->message:"No message reported.";
 		$msg.= " Error ID: "; 
 		$msg.= (is_object($decoded) && isset($decoded->error->errorId) && !empty($decoded->error->errorId))?$decoded->error->errorId:'None provided';  
-	 	watchdog('pearson_mp', $msg . " - The API Server responded with ".$http_code.". Found in remoteOAuth2POST", NULL, WATCHDOG_CRITICAL);
+	 	watchdog('pearson_mp', $msg . " - The API Server responded with ".$http_code.". Found in remoteOAuth2POSTFile", NULL, WATCHDOG_CRITICAL);
 	// Else you have a successful response. 
 	} else {	 
 		$decoded_response = json_decode($api_response); 
@@ -860,6 +902,48 @@ function remoteOAuth2GET($accessToken, $route){
 		$msg.= " Error ID: "; 
 		$msg.= (is_object($decoded) && isset($decoded->error->errorId) && !empty($decoded->error->errorId))?$decoded->error->errorId:'None provided';  
 	 	watchdog('pearson_mp', $msg . " - The API Server responded with ".$http_code.". Found in remoteOAuth2GET", NULL, WATCHDOG_CRITICAL);
+	// Else you have a successful response. 
+	} else {	 
+		$decoded_response = json_decode($api_response); 
+		// dsm($decoded_response);  
+		return $decoded_response;
+	}
+}
+
+function remoteOAuth2POST($access, $route, $body){
+	// set up header
+	watchdog('findthis', 'trying with body of ' . $body, NULL, WATCHDOG_CRITICAL);
+
+	$header = 'X-Authorization: Access_Token access_token=' . $access;
+	$curl = curl_init();
+	
+	curl_setopt_array($curl, array(
+	    CURLOPT_RETURNTRANSFER => 1,
+	    CURLOPT_URL => 'https://m-api.ecollege.com/' . $route,
+	    CURLOPT_POST => 1,
+	    CURLOPT_POSTFIELDS => $body,
+	    CURLOPT_HTTPHEADER => array($header, 'Content-Type: application/json; charset=utf-8'),
+	    CURLOPT_SSL_VERIFYPEER => 0
+	));
+		 	
+	// Execute & get variables
+	$api_response = curl_exec($curl);
+	$curlError = curl_error($curl);
+	$info = curl_getinfo($curl); 
+	$http_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+	curl_close($curl);	
+	 
+	// Test if there was a cURL problem (request didn't go through)
+	if($curlError){
+	 	 watchdog('pearson_mp', $curlError . " - There was a problem making the API Call. cURL problem in remoteOAuth2POST", NULL, WATCHDOG_CRITICAL);
+	// Test if there is a 4XX error (request went through but erred). 
+	} else if(intval($http_code / 100) >=4){
+	 
+		$decoded = json_decode($api_response); 
+		$msg = (is_object($decoded) && isset($decoded->error->message))?$decoded->error->message:"No message reported.";
+		$msg.= " Error ID: "; 
+		$msg.= (is_object($decoded) && isset($decoded->error->errorId) && !empty($decoded->error->errorId))?$decoded->error->errorId:'None provided';  
+	 	watchdog('pearson_mp', $msg . " - The API Server responded with ".$http_code.". Found in remoteOAuth2POST", NULL, WATCHDOG_CRITICAL);
 	// Else you have a successful response. 
 	} else {	 
 		$decoded_response = json_decode($api_response); 
@@ -1122,7 +1206,7 @@ function _import_rules(){
 }
 
 function pearson_mp_user_view($account, $view_mode, $langcode){
-
+	dsm($account, 'account');
 	$roles = $account->roles;
 	unset($roles[2]);
 	$printedRoles = implode(', ', $roles);
@@ -1137,13 +1221,25 @@ function pearson_mp_user_view($account, $view_mode, $langcode){
 	$classIDs = classesByUID(arg(1));
 	for ($i=0; $i < count($classIDs); $i++) { 
 		$view = views_embed_view('pearson_course', 'page', $classIDs[$i]->entity_id);
+
+		$classNode = node_load($classIDs[$i]->entity_id);
+		// dsm($classNode, 'classNode');
+		$pearsonCID = $classNode->field_pearson_course_number[LANGUAGE_NONE][0]['value'];
+		$pearsonUname = $account->field_pearson_username[LANGUAGE_NONE][0]['value'];
+		$pearsonUID = $account->field_pearson_user_id[LANGUAGE_NONE][0]['value'];
+		$view .= l('Enter here', 'course-entry', array('query' => array('UserID' => $pearsonUID, 'UserName' => $pearsonUname, 'CourseID' => $pearsonCID), 'html' => TRUE, 'attributes' => array('target' => '_blank')));
+				
 		$account->content['view' . $i] = array(
 		 '#type' => 'markup',
 		 '#weight' => 100 + $i,
 		 '#markup' => $view,
 		);
-		
+
 	} 
+	
+		// $userID = $_GET['UserID'];
+	// $userName = $_GET['UserName'];
+	// $courseID = $_GET['CourseID'];
 	
 
 	
@@ -1174,3 +1270,85 @@ function classesByUID($uid){
 	*/	
 
 
+function subPearsonCourse($cid){
+	$prin = variable_get('pearson_principal');
+	$prin_shared = variable_get('pearson_principal_shared');
+	$time = time();
+	$tags = 'CourseID:8930875, CourseID:8930876';
+	$callbackURL = 'http://www.mikedotexe.com/pearson-ann/announcement';
+	
+	$StringParts = array('Timestamp' => $time, 'CALLBACK-URL' => $callbackURL, 'TAGS', $tags);
+	ksort($StringParts); 
+	 
+	$encodable = array(); 
+	 
+	foreach($StringParts as $key=>$value){ 
+		$encodable[] = $key.'='.$value; 
+	} 
+	 
+	$signable_string = urlencode(implode('&',$encodable)); 
+	 
+	 
+	// Get a Signature for the string. Signature is an AES-CMAC hash.
+	$CMACEngine = new CryptLib\MAC\Implementation\CMAC;
+	 
+	$packed_string = ''; 
+	$stringlength = strlen($signable_string); 
+	for($i=0; $i<$stringlength; $i++) { 
+	    $packed_string .= pack("c", ord(substr($signable_string, $i, 1))); 
+	} 		
+	//dsm($packed_string, 'packed string'); 
+	$binary_cmac = $CMACEngine->generate($packed_string,$prin_shared); 
+	//dsm($binary_cmac, 'binary cmac');
+	
+	$signature = base64_encode($binary_cmac);
+	$finalAuthorization = $prin . '|' . $time . '|' . $signature;
+	
+	
+	// $header = 'Authorization: Access_Token access_token=' . $access;
+	// $header = 'Authorization: ' . $finalAuthorization;
+	$urlVars = array();
+	$urlVars['TAGS'] = $tags;
+	$urlVars['Authorization'] = $finalAuthorization;
+	$urlVars['CALLBACK-URL'] = $callbackURL;
+	
+	$urlVarsWebReady = urlencode(implode('&',$urlVars));
+	
+	
+	$curl = curl_init();
+	
+	curl_setopt_array($curl, array(
+	    CURLOPT_RETURNTRANSFER => 1,
+	    CURLOPT_URL => 'https://m-api.ecollege.com/v1/subscription',
+	    CURLOPT_POST => 1,
+	    CURLOPT_POSTFIELDS => $body,
+	    CURLOPT_HTTPHEADER => array('Content-Type: application/x-www-form-urlencoded'),
+	    CURLOPT_SSL_VERIFYPEER => 0
+	));
+		 	
+	// Execute & get variables
+	$api_response = curl_exec($curl);
+	$curlError = curl_error($curl);
+	$info = curl_getinfo($curl); 
+	$http_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+	curl_close($curl);	
+	 
+	// Test if there was a cURL problem (request didn't go through)
+	if($curlError){
+	 	 watchdog('pearson_mp', $curlError . " - There was a problem making the API Call. cURL problem in subPearsonCourse", NULL, WATCHDOG_CRITICAL);
+	// Test if there is a 4XX error (request went through but erred). 
+	} else if(intval($http_code / 100) >=4){
+	 
+		$decoded = json_decode($api_response); 
+		$msg = (is_object($decoded) && isset($decoded->error->message))?$decoded->error->message:"No message reported.";
+		$msg.= " Error ID: "; 
+		$msg.= (is_object($decoded) && isset($decoded->error->errorId) && !empty($decoded->error->errorId))?$decoded->error->errorId:'None provided';  
+	 	watchdog('pearson_mp', $msg . " - The API Server responded with ".$http_code.". Found in subPearsonCourse", NULL, WATCHDOG_CRITICAL);
+	// Else you have a successful response. 
+	} else {	 
+		$decoded_response = json_decode($api_response); 
+		// dsm($decoded_response);  
+		return $decoded_response;
+	}	
+		
+}
