@@ -48,7 +48,7 @@ function pearson_mp_menu(){
   return $items;
 }
 
-function _pearson_settings() {
+function _pearson_settings($form, &$form_state) {
   $form = array();
 
   $form['pearson_app_id'] = array(
@@ -96,9 +96,70 @@ function _pearson_settings() {
     '#required' => TRUE,
   );
   
+  // begin adding links
+  
+  $form['#tree'] = TRUE;
+  $form['names_fieldset'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Common links to access'),
+    // Set up the wrapper so that AJAX will be able to replace the fieldset.
+    '#prefix' => '<div id="names-fieldset-wrapper">',
+    '#suffix' => '</div>',
+  );
+
+  // Build the fieldset with the proper number of names. We'll use
+  // $form_state['num_names'] to determine the number of textfields to build.
+  if (empty($form_state['num_names'])) {
+    $form_state['num_names'] = 1;
+  }
+  for ($i = 0; $i < $form_state['num_names']; $i++) {
+    $form['names_fieldset']['name'][$i] = array(
+      '#type' => 'textfield',
+      '#title' => t('Link'),
+    );
+  }
+  $form['names_fieldset']['add_name'] = array(
+    '#type' => 'submit',
+    '#value' => t('Add'),
+    '#submit' => array('pearson_mp_add_more_add_one'),
+    // See the examples in ajax_example.module for more details on the
+    // properties of #ajax.
+    '#ajax' => array(
+      'callback' => 'pearson_mp_add_more_callback',
+      'wrapper' => 'names-fieldset-wrapper',
+    ),
+  );
+  if ($form_state['num_names'] > 1) {
+    $form['names_fieldset']['remove_name'] = array(
+      '#type' => 'submit',
+      '#value' => t('Remove'),
+      '#submit' => array('pearson_mp_add_more_remove_one'),
+      '#ajax' => array(
+        'callback' => 'pearson_mp_add_more_callback',
+        'wrapper' => 'names-fieldset-wrapper',
+      ),
+    );
+  } 
+  
   // TODO: add submit button to reset all bundles
 
   return system_settings_form($form);
+}
+
+function pearson_mp_add_more_callback($form, $form_state) {
+  return $form['names_fieldset'];
+}
+
+function pearson_mp_add_more_add_one($form, &$form_state) {
+  $form_state['num_names']++;
+  $form_state['rebuild'] = TRUE;
+}
+
+function pearson_mp_add_more_remove_one($form, &$form_state) {
+  if ($form_state['num_names'] > 1) {
+    $form_state['num_names']--;
+  }
+  $form_state['rebuild'] = TRUE;
 }
 
 function _pearson_course_entry() {
