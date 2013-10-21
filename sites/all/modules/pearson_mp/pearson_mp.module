@@ -1222,7 +1222,10 @@ function pearson_mp_user_view($account, $view_mode, $langcode){
 	$classIDs = classesByUID(arg(1));
 	for ($i=0; $i < count($classIDs); $i++) { 
 		$view = views_embed_view('pearson_course', 'page', $classIDs[$i]->entity_id);
+		$annView = views_embed_view('pearson_announcements', 'page', $classIDs[$i]->entity_id);
+		// dsm($annView, '$annView');
 
+		
 		$classNode = node_load($classIDs[$i]->entity_id);
 		// dsm($classNode, 'classNode');
 		$pearsonCID = $classNode->field_pearson_course_number[LANGUAGE_NONE][0]['value'];
@@ -1231,6 +1234,15 @@ function pearson_mp_user_view($account, $view_mode, $langcode){
 		$pearsonUID = $account->field_pearson_user_id[LANGUAGE_NONE][0]['value'];
 		
 		$view .= l('Course Entry for ' . $pearsonCC, 'course-entry', array('query' => array('UserID' => $pearsonUID, 'UserName' => $pearsonUname, 'CourseID' => $pearsonCID), 'html' => TRUE, 'attributes' => array('target' => '_blank')));
+		
+		if (strpos($annView, 'view-content')){
+			// we have results
+			$view .= '<h3>Announcement(s)</h3>' . $annView;
+		} else{
+			$view .= '<h3>No Announcements</h3>';
+		}
+
+		$view .= '<hr/>';		
 				
 		$account->content['view' . $i] = array(
 		 '#type' => 'markup',
@@ -1248,6 +1260,11 @@ function pearson_mp_user_view($account, $view_mode, $langcode){
 	
 	// dsm($account, 'account');
 	// dsm($view_mode, 'view mode');	
+}
+
+function pearson_mp_node_view($node, $view_mode){
+	dsm($node, 'node');
+	dsm($view_mode, '$view_mode');
 }
 
 // returns an array like this: 0->entity_id, 1->entity_id

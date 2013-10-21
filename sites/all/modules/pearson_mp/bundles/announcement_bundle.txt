@@ -504,7 +504,7 @@ $data = array(
   'instances' => array(
     'field_pearson_ann_course' => array(
       0 => array(
-        'label' => 'Pearson Ann Course',
+        'label' => 'Course',
         'widget' => array(
           'weight' => '3',
           'type' => 'entityreference_autocomplete',
@@ -526,13 +526,13 @@ $data = array(
         ),
         'display' => array(
           'default' => array(
-            'label' => 'above',
+            'label' => 'hidden',
             'type' => 'entityreference_label',
+            'weight' => '0',
             'settings' => array(
-              'link' => FALSE,
+              'link' => 1,
             ),
             'module' => 'entityreference',
-            'weight' => 7,
           ),
           'teaser' => array(
             'type' => 'hidden',
@@ -553,7 +553,7 @@ $data = array(
     ),
     'field_pearson_ann_enddisplaydate' => array(
       0 => array(
-        'label' => 'Pearson Ann endDisplayDate',
+        'label' => 'End Display Date',
         'widget' => array(
           'weight' => '2',
           'type' => 'date_text',
@@ -578,16 +578,9 @@ $data = array(
         'display' => array(
           'default' => array(
             'label' => 'above',
-            'type' => 'date_default',
-            'settings' => array(
-              'format_type' => 'long',
-              'multiple_number' => '',
-              'multiple_from' => '',
-              'multiple_to' => '',
-              'fromto' => 'both',
-            ),
-            'module' => 'date',
-            'weight' => 6,
+            'type' => 'hidden',
+            'weight' => '5',
+            'settings' => array(),
           ),
           'teaser' => array(
             'type' => 'hidden',
@@ -612,7 +605,7 @@ $data = array(
     ),
     'field_pearson_ann_id' => array(
       0 => array(
-        'label' => 'Pearson Ann ID',
+        'label' => 'Announcement ID',
         'widget' => array(
           'weight' => '-3',
           'type' => 'text_textfield',
@@ -629,10 +622,9 @@ $data = array(
         'display' => array(
           'default' => array(
             'label' => 'above',
-            'type' => 'text_default',
+            'type' => 'hidden',
+            'weight' => '4',
             'settings' => array(),
-            'module' => 'text',
-            'weight' => 1,
           ),
           'teaser' => array(
             'type' => 'hidden',
@@ -658,7 +650,7 @@ $data = array(
     ),
     'field_pearson_ann_startdisplayda' => array(
       0 => array(
-        'label' => 'Pearson Ann startDisplayDate',
+        'label' => 'Start Display Date',
         'widget' => array(
           'weight' => '1',
           'type' => 'date_text',
@@ -683,16 +675,9 @@ $data = array(
         'display' => array(
           'default' => array(
             'label' => 'above',
-            'type' => 'date_default',
-            'settings' => array(
-              'format_type' => 'long',
-              'multiple_number' => '',
-              'multiple_from' => '',
-              'multiple_to' => '',
-              'fromto' => 'both',
-            ),
-            'module' => 'date',
-            'weight' => 5,
+            'type' => 'hidden',
+            'weight' => '6',
+            'settings' => array(),
           ),
           'teaser' => array(
             'type' => 'hidden',
@@ -717,7 +702,7 @@ $data = array(
     ),
     'field_pearson_ann_subject' => array(
       0 => array(
-        'label' => 'Pearson Ann Subject',
+        'label' => 'Subject',
         'widget' => array(
           'weight' => '-2',
           'type' => 'text_textfield',
@@ -733,11 +718,11 @@ $data = array(
         ),
         'display' => array(
           'default' => array(
-            'label' => 'above',
+            'label' => 'inline',
             'type' => 'text_default',
+            'weight' => '1',
             'settings' => array(),
             'module' => 'text',
-            'weight' => 2,
           ),
           'teaser' => array(
             'type' => 'hidden',
@@ -763,9 +748,9 @@ $data = array(
     ),
     'field_pearson_ann_submitter' => array(
       0 => array(
-        'label' => 'Pearson Ann Submitter',
+        'label' => 'Submitter',
         'widget' => array(
-          'weight' => '0',
+          'weight' => 0,
           'type' => 'text_textfield',
           'module' => 'text',
           'active' => 1,
@@ -780,10 +765,9 @@ $data = array(
         'display' => array(
           'default' => array(
             'label' => 'above',
-            'type' => 'text_default',
+            'type' => 'hidden',
+            'weight' => '3',
             'settings' => array(),
-            'module' => 'text',
-            'weight' => 4,
           ),
           'teaser' => array(
             'type' => 'hidden',
@@ -809,7 +793,7 @@ $data = array(
     ),
     'field_pearson_ann_text' => array(
       0 => array(
-        'label' => 'Pearson Ann Text',
+        'label' => 'Text',
         'widget' => array(
           'weight' => '-1',
           'type' => 'text_textarea',
@@ -827,9 +811,9 @@ $data = array(
           'default' => array(
             'label' => 'above',
             'type' => 'text_default',
+            'weight' => '2',
             'settings' => array(),
             'module' => 'text',
-            'weight' => 3,
           ),
           'teaser' => array(
             'type' => 'hidden',
