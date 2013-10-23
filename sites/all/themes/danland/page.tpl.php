@@ -4,6 +4,9 @@
 <div <?php print danland_page_class($page['sidebar_first'], $page['sidebar_second']); ?>>
 <div id="header">
 <div id="header-wrapper">
+	<div id="logo">
+		
+	</div>
 	<?php if ($logo): ?> 
 		<div id="logo-wrapper">
 			<div class="logo">
@@ -50,7 +53,7 @@
 <div style="clear:both"></div>
 
 <div id="menu">
-<div id="rounded-menu-left"></div>
+<!-- <div id="rounded-menu-left"></div> -->
  <?php if ($main_menu || $page['superfish_menu']): ?>
       <div id="<?php print $main_menu ? 'nav' : 'superfish' ; ?>">
         <?php 
@@ -63,7 +66,7 @@
         ?>
       </div> <!-- end primary -->
     <?php endif; ?>
-<div id="rounded-menu-right"></div>
+<!-- <div id="rounded-menu-right"></div> -->
 </div> <!-- end menu -->
 <div style="clear:both"></div>
 
@@ -113,14 +116,14 @@
 <div style="clear:both"></div>
 <div id="wrapper">
 
-    <?php if ($page['sidebar_first']): ?>
+    <?php // if ($page['sidebar_first'] || 1) : ?>
       <div id="sidebar-left" class="column sidebar"><div class="section">
       	<?php global $base_url; ?>
       	<img src="<?php echo $base_url; ?>/sites/all/themes/danland/images/mp/sidebar.png"/>
         <?php print render($page['sidebar_first']); ?>        
       </div></div> <!-- end sidebar-first -->
-    <?php endif; ?>
-<div id="content">
+    <?php // endif; ?>
+<div id="content" class="one-sidebar">
 			<a id="main-content"></a>
 			<?php if ($page['content_top']) : ?><div class="content-top"><?php print render ($page['content_top']); ?></div>
 			<?php endif; ?>

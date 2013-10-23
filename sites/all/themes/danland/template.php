@@ -6,6 +6,8 @@ function danland_page_class($sidebar_first, $sidebar_second) {
 	}
 	else if ($sidebar_first || $sidebar_second) {
 		$id = 'layout-type-1';
+	} else {
+		$id = 'layout-type-1';	
 	}
 
 	if(isset($id)) {
