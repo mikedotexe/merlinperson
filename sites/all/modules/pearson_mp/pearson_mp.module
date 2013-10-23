@@ -198,7 +198,7 @@ function _pearson_course_entry() {
 	
 	$access = remoteOAuth2GETAssertion($userName);
 	// dsm($access, 'access');
-	$ceObj = remoteOAuth2POST($access->access_token, 'lsEntry/course', $body);
+	$ceObj = remoteOAuth2POST($access->access_token, '/lsEntry/course', $body);
 	// dsm($ceObj, 'course entry object');
 	$url = $ceObj->lsEntry->entryUrl;
 	
