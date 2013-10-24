@@ -594,8 +594,8 @@ margin: 15px auto 0;
 }
 
 #content {
-/*width: 100%;*/
-width: 69%;
+width: 100%;
+/*width: 69%;*/
 float: left;
 }
 
@@ -715,7 +715,8 @@ margin-bottom:10px;
 
 .node {
 border-bottom: 1px solid #bbb;
-margin: 20px 0;
+/*margin: 20px 0;*/
+margin: 20px 19px;
 padding-bottom:15px;
 }
 
@@ -770,7 +771,8 @@ margin:15px;
 }
 
 .title, .title a {
-margin: 0 auto;
+/*margin: 0 auto;*/
+margin: 0 .3em;
 line-height: 1.2em;
 }
 
@@ -1545,4 +1547,8 @@ list-style-image:none;
 #authorize a {
 	color: #fff;
 }
+
+#iforget {
+    margin: 15px auto;
+    width: 970px;
 }

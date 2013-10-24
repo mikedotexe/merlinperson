@@ -38,7 +38,7 @@
 
 	<?php if ($feed_icons): ?>
 		<div class="feed-wrapper">
-			<?php print $feed_icons; ?>
+			<?php //print $feed_icons; ?>
 		</div>
 	<?php endif; ?>
 
@@ -71,13 +71,17 @@
 <div style="clear:both"></div>
 
 <?php if($is_front): ?>
-<div id="slideshow-wrapper">
+	<div id="iforget">
+		<img src="<?php global $base_url; echo $base_url; ?>/sites/all/themes/danland/images/uhh/uhhslideshow2.png"/>
+	</div>
+<?php endif; ?>
+<!-- <div id="slideshow-wrapper">
 <div class="slideshow-inner">
 <div id="slideshow-preface">
  <?php if ($page['preface']): ?>
           <div id="preface">
             <?php print render ($page['preface']); ?>
-          </div><!-- end preface -->
+          </div>
  <?php endif; ?>
 </div>
 <?php if ($page['highlighted']) : ?><div id="slideshow-bottom">
@@ -89,7 +93,7 @@
 </div>
 </div>
 </div>
-<?php endif; ?>
+<?php //endif; ?>
 
  <?php if($page['preface_first'] || $page['preface_middle'] || $page['preface_last']) : ?>
     <div style="clear:both"></div>
@@ -111,15 +115,15 @@
           <?php endif; ?>
       <div style="clear:both"></div>
     </div>
-    <?php endif; ?>
+ <?php endif; ?> -->
 
 <div style="clear:both"></div>
 <div id="wrapper">
-
+	<!-- <div>findthis</div> -->
     <?php // if ($page['sidebar_first'] || 1) : ?>
       <div id="sidebar-left" class="column sidebar"><div class="section">
       	<?php global $base_url; ?>
-      	<img src="<?php echo $base_url; ?>/sites/all/themes/danland/images/mp/sidebar.png"/>
+      	<!-- <img src="<?php echo $base_url; ?>/sites/all/themes/danland/images/mp/sidebar.png"/> -->
         <?php print render($page['sidebar_first']); ?>        
       </div></div> <!-- end sidebar-first -->
     <?php // endif; ?>
