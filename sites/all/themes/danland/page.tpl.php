@@ -5,7 +5,7 @@
 <div id="header">
 <div id="header-wrapper">
 	<div id="logo">
-		
+		<a accesskey="1" title="Go to the UH Pearson home page" href="http://www.mikedotexe.com/"><span id="hideme">UH Pearson home page</span></a>		
 	</div>
 	<?php if ($logo): ?> 
 		<div id="logo-wrapper">

@@ -1552,3 +1552,15 @@ list-style-image:none;
     margin: 15px auto;
     width: 970px;
 }
+
+#hideme {
+	display: none;
+}
+
+#logo a {
+    display: block;
+    height: 97px;
+    margin: 0;
+    padding: 0;
+    width: 242px;
+}
