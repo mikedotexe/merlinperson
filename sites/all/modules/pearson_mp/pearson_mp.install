@@ -39,6 +39,11 @@ function pearson_mp_schema() {
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
+      'type' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
       'description' => array(
         'type' => 'varchar',
         'length' => 255,

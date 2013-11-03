@@ -296,7 +296,7 @@ function pearson_mp_cron(){
 	$remoteAll = remoteOAuth1('/terms/' . $term . '/courses');
 	// check to see if the hash is the same, function returns TRUE if there is new stuff
 	$remoteAllSer = serialize($remoteAll);
-	$newCoursesInfo = newHashedInfo('coursesFromTerm' . $term, $remoteAllSer);
+	$newCoursesInfo = newHashedInfo('coursesFromTerm', $term, $remoteAllSer);
 	if ($newCoursesInfo) variable_set('pearson updateCourseInfo', TRUE); // if there's new stuff to add from courses. need to know final ID too, see below
 	$finalCourseID = '';
 	if (is_array($remoteAll->courses)){ // this helps block warnings
@@ -310,6 +310,7 @@ function pearson_mp_cron(){
 		// set variable so we know when the last one is processed later, and can turn 'pearson updateCourseInfo' to FALSE
 		variable_set('pearson updateCourseInfo FinalID', $finalCourseID);		
 	}
+	// watchdog('pearson_mp_debug', 'Calling checkC');
 	checkAnnouncements();
 }
 
@@ -321,20 +322,26 @@ function checkAnnouncements($IDarray = array()){
 	$queueAnnFromCourse = DrupalQueue::get("pearsonAnnouncementFromCourse");
 	if (empty($IDarray)){
 		// want to check all announcements from all courses
+		// TODO: not sure if we need to get hash information below
 		$query = db_select('node', 'n');
 		$query->join('field_data_field_pearson_course_number', 'c', 'n.nid = c.entity_id');
 		$query->leftjoin('pearson_mp_hashes', 'h', 'c.field_pearson_course_number_value = h.description');
-		$query->fields('c', array('field_pearson_course_number_value'))->fields('h', array('hash'))->condition('type', 'pearson_course');
+		// $query->fields('c', array('field_pearson_course_number_value'))->fields('h', array('hash'))->condition('n.type', 'pearson_course')->condition('h.type', 'ann');
+		$query->fields('c', array('field_pearson_course_number_value'))->fields('h', array('hash'))->condition('n.type', 'pearson_course');
 		$result = $query->execute()->fetchAll();
+		
+		// $debug1 = serialize($result);
+		// watchdog('pearson_mp_debug', 'serialized result in checkAnnoucnements ' . $debug1);
 		// dsm($result, 'result');\		
 		foreach ($result as $k => $v) {			
 			$queueAnnFromCourse->createItem($v);
 		}
 	} else {
 		// only check for announcements from a particular course
+		watchdog('pearson_mp_debug', 'should not be here');
 		foreach ($IDarray as $cid){
 			$query = db_select('pearson_mp_hashes', 'h');
-			$query->fields('h', array('hash'))->condition('h.description', $cid);
+			$query->fields('h', array('hash'))->condition('h.description', $cid)->condition('h.type', 'ann');
 			$result = $query->execute()->fetchAll();
 			if (empty($result)){
 				$result[0] = new stdClass();
@@ -344,7 +351,7 @@ function checkAnnouncements($IDarray = array()){
 			// dsm($result[0], 'result');
 			
 			// add to queue			
-			$queueAnnFromCourse->createItem($result[0]);		
+			$queueAnnFromCourse->createItem($result[0]);
 		}
 	}
 } 
@@ -354,6 +361,7 @@ function checkAnnouncements($IDarray = array()){
  */
 
 function PearsonAnnouncements($item){
+	// watchdog('pearson_mp_debug', 'Entering PearsonAnnouncements');
 	$cid = $item->field_pearson_course_number_value;
 	if (empty($cid)) return;	
 	
@@ -371,6 +379,7 @@ function PearsonAnnouncements($item){
 	
 	if (empty($res)){
 		watchdog('pearson_mp', '[PearsonAnnouncements] Could not find username for teacher in course ' . $cid, NULL, WATCHDOG_CRITICAL);
+		// watchdog('pearson_mp_debug', '[PearsonAnnouncements] Could not find username for teacher in course ' . $cid, NULL, WATCHDOG_CRITICAL);
 		return;
 	}
 	
@@ -382,7 +391,7 @@ function PearsonAnnouncements($item){
 	
 	// get announcements for course
 	$announcements = remoteOAuth2GET($accessToken, '/courses/' . $cid . '/announcements');
-	watchdog('pearson_mp', 'Announcements for Course ' . $cid . ' (' . count($announcements->announcements) . ' total)');
+	// watchdog('pearson_mp', 'Announcements for Course ' . $cid . ' (' . count($announcements->announcements) . ' total)');
 	foreach ($announcements->announcements as $ann){
 		updateOrAddAnnouncement($ann, $cid);
 	}
@@ -390,6 +399,7 @@ function PearsonAnnouncements($item){
 }
 
 function updateOrAddAnnouncement($item, $cid){
+	// watchdog('pearson_mp_debug', 'Entering updateOrAddAnnouncement');
 	// see if we have a node with that Pearson ID (not Drupal nid, or Node ID)
 	// if so, return the nid, if not, return blank
 	$findAnnID = $item->id;
@@ -400,6 +410,24 @@ function updateOrAddAnnouncement($item, $cid){
 	  ->condition('n.type', 'pearson_announcement')
 	  ->condition('b.field_pearson_ann_id_value', $findAnnID);
 	$result = $query->execute()->fetchAll();
+	
+	// see what the hash is, if there's already that announcement
+	// TODO: see if we can use the newHashedInfo() return values instead of what's done here
+	$query2 = db_select('pearson_mp_hashes', 'h');
+	$query2->fields('h', array('hash'))->condition('h.type', 'ann')->condition('h.description', $item->id);
+	$hashRes = $query2->execute()->fetchAll();
+	$storedHash = $hashRes[0]->hash;
+	
+	// compare to computed hash
+	$serialItem = serialize($item);
+	$computedHash = hash("crc32b", $serialItem);
+	
+	// if they're the same, bail
+	if ($computedHash == $storedHash){
+		// same, no need to compute anymore
+		watchdog('pearson_mp', 'Announcement hash the same for Announcement ID ' . $findAnnID);
+		return;		
+	}	
 	  		  			
 	$newNode = (object) NULL;
 	$newNode->type = 'pearson_announcement';
@@ -420,7 +448,7 @@ function updateOrAddAnnouncement($item, $cid){
 	$newNode->field_pearson_ann_enddisplaydate[LANGUAGE_NONE][0]['value'] = $item->endDisplayDate;
 	$newNode->title = $item->subject; // TODO: somewhat redundant
 		
-	// if we are updating this node (if the Course ID already exists in the system)
+	// if we are updating this node
 	if (!empty($result)){
 		// we're updating this node
 		//dsm('not empty');
@@ -444,46 +472,52 @@ function updateOrAddAnnouncement($item, $cid){
 	$newNode->field_pearson_ann_course[LANGUAGE_NONE][0]['target_type'] = 'node'; // required	
 	
 	node_save($newNode);	
+	
+	// add hash
+	_add_hash('ann', $findAnnID, $computedHash, $item);
 }
   
 /*
 *	Add hash to custom table we set up in hook_schema in pearson_mp.install
- *  $desciptions are
- * 		'coursesFromTerm' . {TermID}
- * 		'usersInCourse' . {CourseID}
+ *  $type might be coursesFromTerm
+ * 	$description is now being typically used as the unique drupal ID
  */
-function newHashedInfo($description, &$item){
-	$hash = hash("crc32b", $item);
+function newHashedInfo($type, $description, &$item){
+	$serialItem = serialize($item);
+	// $hash = hash("crc32b", $item);
+	$hash = hash("crc32b", $serialItem);
 	// check to see if hash is the same as that in the database
 	$query = db_select('pearson_mp_hashes', 'p');
-	$query->fields('p', array('hash'))->condition('p.description', $description);
+	$query->fields('p', array('hash'))->condition('p.description', $description)->condition('p.type', $type);
 	$result = $query->execute()->fetch();
 	// TODO: this logic could probably be reduced to if(empty($result) || $result->hash != $hash), but keep it for easy debugging
 	if (empty($result)){
 		// never added to db before, add it
-		_add_hash($description, $hash, $item);
+		_add_hash($type, $description, $hash, $item);
 		return TRUE;
 	} else {
 		// found a previous entry in db
 		// see if hashes are the same
 		if ($result->hash == $hash){
 			// everything is the same as the last time we checked
-			watchdog('pearson_mp', 'Nothing has been updated for hash ' . $description);
+			// watchdog('pearson_mp', 'Nothing has been updated for hash ' . $type . ' ' . $description);
 			return FALSE;
 		} else {
 			// it's different, go ahead and update stuff
 			// update the hash in the database, and tell calling function that there's new stuff (TRUE)
-			watchdog('pearson_mp', 'Adding hash for ' . $description);
-			_add_hash($description, $hash, $item);
+			watchdog('pearson_mp', 'Adding hash for ' . $type . ' ' . $description);
+			_add_hash($type, $description, $hash, $item);
 			return TRUE;
 		}
 	}
 }
  
-function _add_hash($description, $hash, &$item){
+function _add_hash($type, $description, $hash, &$item){
+	// TODO: make sure this key is supposed to be at description
 	db_merge('pearson_mp_hashes')
 	  ->key(array('description' => $description))
 	  ->fields(array(
+	  	  'type' => $type,
 	      'hash' => $hash,
 	      'fulldata' => serialize($item),
 	  ))
@@ -552,6 +586,7 @@ function remoteOAuth1($route, $ct_urlenc = FALSE){
 	 
 	// Get a Signature for the string. Signature is an AES-CMAC hash.
 	$CMACEngine = new CryptLib\MAC\Implementation\CMAC;
+	// $CMACEngine = new CryptLib\\MAC\\Implementation\\CMAC;
 	 
 	$packed_string = ''; 
 	$stringlength = strlen($signable_string); 
@@ -642,6 +677,7 @@ function PearsonUpdateOrAdd($item){
 	// see if we have a node with that Pearson ID (not Drupal nid, or Node ID)
 	// if so, return the nid, if not, return blank
 	$findCourseID = $item->id;
+		
 	$query = db_select('node', 'n');
 	$query->join('field_data_field_pearson_course_number', 'b', 'n.nid = b.entity_id');
 	$query
@@ -649,7 +685,19 @@ function PearsonUpdateOrAdd($item){
 	  ->condition('n.type', 'pearson_course')
 	  ->condition('b.field_pearson_course_number_value', $findCourseID);
 	$result = $query->execute()->fetchAll();
-// begin - add users	
+	
+	//see if there is hash info
+	$isNewInfo = newHashedInfo('course', $findCourseID, $item);
+	// if there's no new info - hash is same - then let's get out of here
+	
+	// this block structured this way becuase I recall trouble using || and negatives. can return to later, this will work
+	if (!empty($result)){ // if that course already exists
+		if ($isNewInfo == FALSE){ // and the hashes are the same
+			return;
+		}		
+	}
+	
+	// begin - add users	
 	  // we'll be using this below to add users to a course
 	  $item->entity_reference = array(); 
 	  
@@ -667,7 +715,7 @@ function PearsonUpdateOrAdd($item){
 			
 		}
 	  }	
-// end - add users	  
+	// end - add users	  
 	
 	//dsm($result, 'result from trying to fetch course id ' . $findCourseID);
 		
@@ -696,20 +744,6 @@ function PearsonUpdateOrAdd($item){
 		$newNode->field_pearson_links[LANGUAGE_NONE][$i]['value'] = $item->links[$i]->href;
 	}
 	
-	
-	// if we are updating this node (if the Course ID already exists in the system)
-	if (!empty($result)){
-		// we're updating this node
-		//dsm('not empty');
-		$newNode->nid = $result[0]->nid;
-		$newNode->vid = $result[0]->nid; // will throw notice without this line
-		// $newNode->is_new = FALSE;
-	} else {
-		// we're creating this node
-		$newNode->created = strtotime("now");	
-		$newNode->is_new = TRUE;	
-	}
-	
 	// TODO: add all the entity references stored in (i think) $item->entity_reference (array)
 	$i = 0;
 	foreach ($item->entity_reference as $user) {		
@@ -719,7 +753,30 @@ function PearsonUpdateOrAdd($item){
 		$i++; // iterate
 	}
 	
-	node_save($newNode);
+	// if we are updating this node (if the Course ID already exists in the system)
+	if (!empty($result)){
+		//TODO: this is where we update the course node, but need to check and make shashes
+		// we're updating this node
+		//dsm('not empty');
+		
+		// $newNode->nid = $result[0]->nid;
+		// $newNode->vid = $result[0]->nid; // will throw notice without this line
+		
+		// $newNode->is_new = FALSE;
+	} else {
+		// we're creating this node
+		$newNode->created = strtotime("now");	
+		$newNode->is_new = TRUE;
+		node_save($newNode);	
+		
+		// add/update hash
+		$serialItem = serialize($item);
+		// $computedHash = hash("crc32b", $item);
+		$computedHash = hash("crc32b", $serialItem);
+		_add_hash('course', $findCourseID, $computedHash, $item);		
+	}	
+	
+	
 	
 	// if this is the last one to update according to the variable, set it back to false (see hook_cron for more info)
 	if ($item->id == variable_get('pearson updateCourseInfo FinalID')){

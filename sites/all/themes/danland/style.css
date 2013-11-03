@@ -1564,3 +1564,10 @@ list-style-image:none;
     padding: 0;
     width: 242px;
 }
+
+h2, h1, h3 {
+    border-bottom: 1px solid #CCCCCC;
+    color: #C10202;
+    margin: 1em 0;
+    text-shadow: 1px 1px 2px #999999;
+}
