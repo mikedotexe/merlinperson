@@ -161,7 +161,7 @@ $data = array(
         ),
         'display' => array(
           'default' => array(
-            'label' => 'above',
+            'label' => 'inline',
             'type' => 'text_default',
             'weight' => '6',
             'settings' => array(),
@@ -195,11 +195,11 @@ $data = array(
         ),
         'display' => array(
           'default' => array(
-            'label' => 'above',
+            'label' => 'inline',
             'type' => 'text_default',
+            'weight' => '10',
             'settings' => array(),
             'module' => 'text',
-            'weight' => 10,
           ),
         ),
         'required' => 0,
