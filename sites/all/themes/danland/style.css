@@ -1571,3 +1571,8 @@ h2, h1, h3 {
     margin: 1em 0;
     text-shadow: 1px 1px 2px #999999;
 }
+
+/* this gets rid of double pager from block */
+#block-system-main .content .item-list {
+    display: none;
+}

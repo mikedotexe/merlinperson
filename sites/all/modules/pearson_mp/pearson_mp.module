@@ -759,8 +759,8 @@ function PearsonUpdateOrAdd($item){
 		// we're updating this node
 		//dsm('not empty');
 		
-		// $newNode->nid = $result[0]->nid;
-		// $newNode->vid = $result[0]->nid; // will throw notice without this line
+		$newNode->nid = $result[0]->nid;
+		$newNode->vid = $result[0]->nid; // will throw notice without this line
 		
 		// $newNode->is_new = FALSE;
 	} else {
@@ -1113,7 +1113,7 @@ function remoteOAuth2GET($accessToken, $route, $decode = TRUE){
 
 function remoteOAuth2POST($access, $route, $body){
 	// set up header
-	watchdog('findthis', 'trying with body of ' . $body, NULL, WATCHDOG_CRITICAL);
+	// watchdog('findthis', 'trying with body of ' . $body, NULL, WATCHDOG_CRITICAL);
 
 	$header = 'X-Authorization: Access_Token access_token=' . $access;
 	$curl = curl_init();
