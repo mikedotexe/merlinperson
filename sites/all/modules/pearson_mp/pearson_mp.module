@@ -1475,8 +1475,8 @@ function pearson_mp_user_view($account, $view_mode, $langcode){
 		
 		// $view .= l('Course Entry for ' . $pearsonCC, 'course-entry', array('query' => array('UserID' => $pearsonUID, 'UserName' => $pearsonUname, 'CourseID' => $pearsonCID), 'html' => TRUE, 'attributes' => array('target' => '_blank', 'class' => 'clearfix')));
 		global $base_url;
-		$img = '<img src="' . $base_url. '/sites/all/themes/danland/images/uhh/courseentry-wide.png"/>';		
-		$view .= l($img, 'course-entry', array('query' => array('UserID' => $pearsonUID, 'UserName' => $pearsonUname, 'CourseID' => $pearsonCID), 'html' => TRUE, 'attributes' => array('target' => '_blank', 'class' => array('courseentry'))));
+		$img = '<img src="' . $base_url. '/sites/all/themes/danland/images/uhh/courseentry-wide.png" alt="Enter Course"/>';		
+		$view .= l($img, 'course-entry', array('query' => array('UserID' => $pearsonUID, 'UserName' => $pearsonUname, 'CourseID' => $pearsonCID), 'html' => TRUE, 'attributes' => array('target' => '_blank', 'alt' => 'Enter Course', 'class' => array('courseentry'))));
 		
 		if (strpos($annView, 'view-content')){
 			// we have results
@@ -1514,8 +1514,8 @@ function pearson_mp_user_view($account, $view_mode, $langcode){
 			// add button to check current grade
 			$account->content['course' . $pearsonCID]['grade' . $together] = array(
 			 '#type' => 'markup',
-			 '#weight' => $account->content['view' . $i]['#weight'] + 1,
-			 '#markup' => '<div id="pearsongrade' . $together . '"></div>',
+			 '#weight' => $account->content['course' . $pearsonCID]['view' . $i]['#weight'] + 2,
+			 '#markup' => '<div id="pearsongrade' . $together . '" class="pearsongrade"></div>',
 			);			
 			$links = array();
 			$links[] = ctools_ajax_text_button(t('What\'s my grade?'), "pearson-mp/ajaxgrade/1/" . $pearsonUID . '/' . $pearsonCID, t('Retrieve grade'));
@@ -1523,9 +1523,9 @@ function pearson_mp_user_view($account, $view_mode, $langcode){
 			$output = theme('item_list', array('items' => $links, 'title' => t('Current grade')));
 			$account->content['course' . $pearsonCID]['gradebtn' . $together] = array(
 			 '#type' => 'markup',
-			 '#weight' => $account->content['view' . $i]['#weight'] + 2,
-			 '#markup' => $output . '<hr/>',
-			);	
+			 '#weight' => $account->content['course' . $pearsonCID]['view' . $i]['#weight'] + 1,
+			 '#markup' => $output,
+			);					
 		}
 		
 		// make table
@@ -1548,29 +1548,65 @@ function _ajax_grade($js = NULL, $uid, $cid) {
   // dsm($uid, 'uid');
   // dsm($cid, 'cid');
   // dsm($arg, 'arg');
+  
+
+	// $Average = array("Average", "data"); 
+	// $Earned = array("Earned", "data"); 
+	// $Possible = array("Possible", "data"); 
+	// $XC = array("Extra Credit", "data"); 
+	// $LC = array("Letter Grade", "data"); 
+	// $Comments = array("Comments", "data");
+	 
+	// $row[] = "Data1";
+	// $rows[] = $row;
+	// $row[] = "Row Column 3 Data"; 
+	// $row[] = "Row Column 4 Data";
+// 	
+	// $rows = array();
+	// $rows[] = $row;
+	
+	// $account->content['course' . $pearsonCID]['debug'] = array(
+	 // '#type' => 'markup',
+	 // '#markup' => $html,
+	// );	  
+  
   $gradeObj = $a = remoteOAuth1("/users/$uid/courses/$cid/coursegradetodate");
   $items = array();
   if ($gradeObj->courseGradeToDate->shareWithStudent){
-	  $items['Average'] = $gradeObj->courseGradeToDate->average;
-	  $items['Earned'] = $gradeObj->courseGradeToDate->earned;
-	  $items['Possible'] = $gradeObj->courseGradeToDate->possible;
-	  $items['Extra Credit'] = $gradeObj->courseGradeToDate->extraCredit;
-	  $items['Letter Grade'] = $gradeObj->courseGradeToDate->letterGrade->letterGrade;
-	  $items['Comments'] = $gradeObj->courseGradeToDate->letterGrade->comments;    	
+	$header = array();
+	$rows = array();
+	
+	$header[] = array("data" => "Category");
+	$header[] = array("data" => "Grade");
+	
+	$rows[] = array("Average", $gradeObj->courseGradeToDate->average); 
+	$rows[] = array("Earned", $gradeObj->courseGradeToDate->earned); 
+	$rows[] = array("Possible", $gradeObj->courseGradeToDate->possible); 
+	$rows[] = array("Extra Credit", $gradeObj->courseGradeToDate->extraCredit); 
+	$rows[] = array("Letter Grade", $gradeObj->courseGradeToDate->letterGrade->letterGrade); 
+	$rows[] = array("Comments", $gradeObj->courseGradeToDate->letterGrade->comments);  	
+	$html = theme('table', array('header' => $header, 'rows' => $rows));
+	  // $items['Average'] = $gradeObj->courseGradeToDate->average;
+	  // $items['Earned'] = $gradeObj->courseGradeToDate->earned;
+	  // $items['Possible'] = $gradeObj->courseGradeToDate->possible;
+	  // $items['Extra Credit'] = $gradeObj->courseGradeToDate->extraCredit;
+	  // $items['Letter Grade'] = $gradeObj->courseGradeToDate->letterGrade->letterGrade;
+	  // $items['Comments'] = $gradeObj->courseGradeToDate->letterGrade->comments;
+        	
   } else {
   	$items['Sorry'] = 'The grades are not available to you.';
   }
-  $output = '';
-  foreach ($items as $k => $v) {
-      $output .= $k . ': ' . $v . '<br/>';
-  }
+  // $output = '';
+  // foreach ($items as $k => $v) {
+      // $output .= $k . ': ' . $v . '<br/>';
+  // }
   
-  // $output = '<h1>' . t('C plus plus for ' . $uid . ' from course ' . $cid) . '</h1>';  
+  // $output = '<h1>' . t('C plus plus for ' . $uid . ' from course ' . $cid) . '</h1>'; 
   
   if ($js) {
     ctools_include('ajax');
     $commands = array();
-    $commands[] = ajax_command_html('#pearsongrade' . $uid . '-' . $cid, $output);
+    $commands[] = ajax_command_html('#pearsongrade' . $uid . '-' . $cid, $html);
     print ajax_render($commands); // this function exits.
     exit;
   }
