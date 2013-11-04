@@ -12,6 +12,7 @@ $view->disabled = FALSE; /* Edit this to true to make a default view disabled in
 /* Display: Master */
 $handler = $view->new_display('default', 'Master', 'default');
 $handler->display->display_options['title'] = 'pearson_course';
+$handler->display->display_options['css_class'] = 'pearson-course-table';
 $handler->display->display_options['use_more_always'] = FALSE;
 $handler->display->display_options['access']['type'] = 'perm';
 $handler->display->display_options['cache']['type'] = 'none';
@@ -19,22 +20,54 @@ $handler->display->display_options['query']['type'] = 'views_query';
 $handler->display->display_options['exposed_form']['type'] = 'basic';
 $handler->display->display_options['pager']['type'] = 'none';
 $handler->display->display_options['style_plugin'] = 'table';
+$handler->display->display_options['style_options']['row_class'] = 'pearson-course-table-row';
+$handler->display->display_options['style_options']['columns'] = array(
+  'title' => 'title',
+  'field_pearson_course_code' => 'field_pearson_course_code',
+  'field_pearson_course_number' => 'field_pearson_course_number',
+);
+$handler->display->display_options['style_options']['default'] = '-1';
+$handler->display->display_options['style_options']['info'] = array(
+  'title' => array(
+    'sortable' => 0,
+    'default_sort_order' => 'asc',
+    'align' => '',
+    'separator' => '',
+    'empty_column' => 0,
+  ),
+  'field_pearson_course_code' => array(
+    'sortable' => 0,
+    'default_sort_order' => 'asc',
+    'align' => '',
+    'separator' => '',
+    'empty_column' => 0,
+  ),
+  'field_pearson_course_number' => array(
+    'sortable' => 0,
+    'default_sort_order' => 'asc',
+    'align' => '',
+    'separator' => '',
+    'empty_column' => 0,
+  ),
+);
 /* Field: Content: Title */
 $handler->display->display_options['fields']['title']['id'] = 'title';
 $handler->display->display_options['fields']['title']['table'] = 'node';
 $handler->display->display_options['fields']['title']['field'] = 'title';
+$handler->display->display_options['fields']['title']['label'] = '';
+$handler->display->display_options['fields']['title']['alter']['alter_text'] = TRUE;
+$handler->display->display_options['fields']['title']['alter']['text'] = 'Course Details';
 $handler->display->display_options['fields']['title']['alter']['word_boundary'] = FALSE;
 $handler->display->display_options['fields']['title']['alter']['ellipsis'] = FALSE;
-/* Field: Content: Pearson Course Code */
+$handler->display->display_options['fields']['title']['element_label_colon'] = FALSE;
+/* Field: Content: Course Code */
 $handler->display->display_options['fields']['field_pearson_course_code']['id'] = 'field_pearson_course_code';
 $handler->display->display_options['fields']['field_pearson_course_code']['table'] = 'field_data_field_pearson_course_code';
 $handler->display->display_options['fields']['field_pearson_course_code']['field'] = 'field_pearson_course_code';
-$handler->display->display_options['fields']['field_pearson_course_code']['label'] = 'Course Code';
-/* Field: Content: Pearson Course Number (ID) */
+/* Field: Content: Course Number (ID) */
 $handler->display->display_options['fields']['field_pearson_course_number']['id'] = 'field_pearson_course_number';
 $handler->display->display_options['fields']['field_pearson_course_number']['table'] = 'field_data_field_pearson_course_number';
 $handler->display->display_options['fields']['field_pearson_course_number']['field'] = 'field_pearson_course_number';
-$handler->display->display_options['fields']['field_pearson_course_number']['label'] = 'Course Number (ID)';
 /* Sort criterion: Content: Post date */
 $handler->display->display_options['sorts']['created']['id'] = 'created';
 $handler->display->display_options['sorts']['created']['table'] = 'node';
