@@ -1579,7 +1579,8 @@ h2, h1, h3 {
 
 fieldset {
 	border: thick solid #ED6B06;
-	background: #edd4c0;
+	/*background: #edd4c0;*/
+	background: url(images/uhh/fieldsetp.png) no-repeat right bottom #edd4c0;
 }
 
 legend {
