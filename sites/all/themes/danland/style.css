@@ -1574,5 +1574,5 @@ h2, h1, h3 {
 
 /* this gets rid of double pager from block */
 #block-system-main .content .item-list {
-    display: none;
+    /*display: none;*/
 }

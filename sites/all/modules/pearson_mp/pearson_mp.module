@@ -687,16 +687,28 @@ function PearsonUpdateOrAdd($item){
 	$result = $query->execute()->fetchAll();
 	
 	//see if there is hash info
-	$isNewInfo = newHashedInfo('course', $findCourseID, $item);
+	$isNewInfo = newHashedInfo('course', $findCourseID, $item); // $item is NOT serialized, done so in function
+	
+
+	
 	// if there's no new info - hash is same - then let's get out of here
 	
+	if ($findCourseID == '8930875'){
+		// debugging
+		$serialItem = serialize($item);
+		$computedHash = hash("crc32b", $serialItem);
+		watchdog('db', 'computed for mine is ' . $computedHash . ' - ' . $isNewInfo . 'end');		
+		// watchdog('db', 'this one');
+	}
 	// this block structured this way becuase I recall trouble using || and negatives. can return to later, this will work
 	if (!empty($result)){ // if that course already exists
 		if ($isNewInfo == FALSE){ // and the hashes are the same
 			return;
 		}		
 	}
-	
+	if ($findCourseID == '8930875'){
+		watchdog('db', 'made it past');
+	}
 	// begin - add users	
 	  // we'll be using this below to add users to a course
 	  $item->entity_reference = array(); 
@@ -767,16 +779,16 @@ function PearsonUpdateOrAdd($item){
 		// we're creating this node
 		$newNode->created = strtotime("now");	
 		$newNode->is_new = TRUE;
-		node_save($newNode);	
 		
-		// add/update hash
-		$serialItem = serialize($item);
-		// $computedHash = hash("crc32b", $item);
-		$computedHash = hash("crc32b", $serialItem);
-		_add_hash('course', $findCourseID, $computedHash, $item);		
 	}	
 	
+	node_save($newNode);	
 	
+	// add/update hash
+	$serialItem = serialize($item);
+	// $computedHash = hash("crc32b", $item);
+	$computedHash = hash("crc32b", $serialItem);
+	_add_hash('course', $findCourseID, $computedHash, $item);	
 	
 	// if this is the last one to update according to the variable, set it back to false (see hook_cron for more info)
 	if ($item->id == variable_get('pearson updateCourseInfo FinalID')){
@@ -1090,7 +1102,7 @@ function remoteOAuth2GET($accessToken, $route, $decode = TRUE){
 	 
 	// Test if there was a cURL problem (request didn't go through)
 	if($curlError){
-	 	 watchdog('pearson_mp', $curlError . " - There was a problem making the API Call. cURL problem in remoteOAuth2GET", NULL, WATCHDOG_CRITICAL);
+	 	 watchdog('pearson_mp', $curlError . " - There was a problem making the API Call. cURL problem in remoteOAuth2GET . ", NULL, WATCHDOG_CRITICAL);
 	// Test if there is a 4XX error (request went through but erred). 
 	} else if(intval($http_code / 100) >=4){
 	 
