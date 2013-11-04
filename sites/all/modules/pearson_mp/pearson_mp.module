@@ -1419,6 +1419,9 @@ function _import_rules(){
 }
 
 function pearson_mp_user_view($account, $view_mode, $langcode){
+	drupal_add_library('system', 'drupal.collapse');
+	drupal_add_js('misc/form.js'); // don't know if its really required to collapsible fieldsets to work
+	drupal_add_js('misc/collapse.js');	
 	// dsm($account, 'account');
 	$roles = $account->roles;
 	unset($roles[2]);
@@ -1429,7 +1432,7 @@ function pearson_mp_user_view($account, $view_mode, $langcode){
 	
 	$account->content['role'] = array(
 	 '#type' => 'markup',
-	 '#markup' => "<h2>Role(s): $printedRoles</h2>",
+	 '#markup' => "<h3>Role(s): $printedRoles</h3>",
 	);
 	$links = array();
 	$fromSettings = variable_get('names_fieldset');
@@ -1442,18 +1445,18 @@ function pearson_mp_user_view($account, $view_mode, $langcode){
 		$bred = implode('<br/>', $links);
 		$account->content['common_links'] = array(
 		 '#type' => 'markup',
-		 '#markup' => "<h3>Common Link(s):<h3/> $bred",
+		 '#markup' => "<h3>Common Link(s):</h3> $bred<hr/>",
 		);
 	}
 	
 	// $origAccount = $account->content;
 	
 	// add header
-	$account->content['view' . $i] = array(
+	$account->content['view'] = array(
 	 '#type' => 'markup',
 	 '#weight' => 99,
 	 '#markup' => '<h1>Courses</h1>',
-	);
+	);	
 	
 	// find all classes associated with this user, embed views for each
 	$classIDs = classesByUID(arg(1));
@@ -1477,9 +1480,21 @@ function pearson_mp_user_view($account, $view_mode, $langcode){
 			$view .= '<h3>Announcement(s)</h3>' . $annView;
 		} else{
 			$view .= '<h3>No Announcements</h3>';
-		}			
+		}
+
+		// make fieldset to hold it
+		$account->content['course' . $pearsonCID] = array(
+			'#type'=>'fieldset',
+			// '#title'=>'<h3>' . $classNode->title . '</h3>',
+			'#title'=>$classNode->title,
+			'#collapsible'=>true,
+			'#collapsed'=>true,
+			'#weight' => 100,
+		);	
+		
+		// $account->content = drupal_render($account->content);
 				
-		$account->content['view' . $i] = array(
+		$account->content['course' . $pearsonCID]['view' . $i] = array(
 		 '#type' => 'markup',
 		 '#weight' => 100 + $i * 5,
 		 '#markup' => $view,
@@ -1489,7 +1504,7 @@ function pearson_mp_user_view($account, $view_mode, $langcode){
 			$together = $pearsonUID . '-' . $pearsonCID;
 			ctools_include('ajax');
 			// add button to check current grade
-			$account->content['grade' . $together] = array(
+			$account->content['course' . $pearsonCID]['grade' . $together] = array(
 			 '#type' => 'markup',
 			 '#weight' => $account->content['view' . $i]['#weight'] + 1,
 			 '#markup' => '<div id="pearsongrade' . $together . '"></div>',
@@ -1498,7 +1513,7 @@ function pearson_mp_user_view($account, $view_mode, $langcode){
 			$links[] = ctools_ajax_text_button(t('What\'s my grade?'), "pearson-mp/ajaxgrade/1/" . $pearsonUID . '/' . $pearsonCID, t('Retrieve grade'));
 			// dsm($links, 'links');
 			$output = theme('item_list', array('items' => $links, 'title' => t('Current grade')));
-			$account->content['gradebtn' . $together] = array(
+			$account->content['course' . $pearsonCID]['gradebtn' . $together] = array(
 			 '#type' => 'markup',
 			 '#weight' => $account->content['view' . $i]['#weight'] + 2,
 			 '#markup' => $output . '<hr/>',
