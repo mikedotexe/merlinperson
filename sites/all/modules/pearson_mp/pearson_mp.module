@@ -1473,7 +1473,10 @@ function pearson_mp_user_view($account, $view_mode, $langcode){
 		$pearsonUname = $account->field_pearson_username[LANGUAGE_NONE][0]['value'];
 		$pearsonUID = $account->field_pearson_user_id[LANGUAGE_NONE][0]['value'];
 		
-		$view .= l('Course Entry for ' . $pearsonCC, 'course-entry', array('query' => array('UserID' => $pearsonUID, 'UserName' => $pearsonUname, 'CourseID' => $pearsonCID), 'html' => TRUE, 'attributes' => array('target' => '_blank')));
+		// $view .= l('Course Entry for ' . $pearsonCC, 'course-entry', array('query' => array('UserID' => $pearsonUID, 'UserName' => $pearsonUname, 'CourseID' => $pearsonCID), 'html' => TRUE, 'attributes' => array('target' => '_blank', 'class' => 'clearfix')));
+		global $base_url;
+		$img = '<img src="' . $base_url. '/sites/all/themes/danland/images/uhh/courseentry-wide.png"/>';		
+		$view .= l($img, 'course-entry', array('query' => array('UserID' => $pearsonUID, 'UserName' => $pearsonUname, 'CourseID' => $pearsonCID), 'html' => TRUE, 'attributes' => array('target' => '_blank', 'class' => array('courseentry'))));
 		
 		if (strpos($annView, 'view-content')){
 			// we have results
@@ -1490,6 +1493,11 @@ function pearson_mp_user_view($account, $view_mode, $langcode){
 			'#collapsible'=>true,
 			'#collapsed'=>true,
 			'#weight' => 100,
+			  '#attributes' => array (
+			    'class' => array(
+			      'collapsible', 'collapsed'
+			    )
+			  )			
 		);	
 		
 		// $account->content = drupal_render($account->content);

@@ -1580,7 +1580,7 @@ h2, h1, h3 {
 fieldset {
 	border: thick solid #ED6B06;
 	/*background: #edd4c0;*/
-	background: url(images/uhh/fieldsetp.png) no-repeat right bottom #edd4c0;
+	background: url(images/uhh/fieldsetpsmall.png) no-repeat right bottom #edd4c0;
 }
 
 legend {
@@ -1588,4 +1588,23 @@ legend {
 	background: #ED6B06;
 	font-size: 1.2em;
 	padding: 5px;
+}
+
+span.fieldset-legend a:hover, span.fieldset-legend a:visited, span.fieldset-legend a {
+	color: #fff;
+}
+
+div.pearson-course-table table thead tr th {
+	background: none repeat scroll 0 0 #ED6B06;
+	color: #fff;
+}
+
+div.pearson-course-table table {
+	width: 57%;
+	float: left;
+	margin-bottom: 1em;
+}
+
+a.courseentry img {
+	float: right;
 }
