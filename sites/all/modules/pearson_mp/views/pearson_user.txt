@@ -137,7 +137,7 @@ $handler->display->display_options['filters']['rid']['expose']['reduce'] = TRUE;
 
 /* Display: Page */
 $handler = $view->new_display('page', 'Page', 'page');
-$handler->display->display_options['path'] = 'user/%/add';
+$handler->display->display_options['path'] = 'pearson-users';
 
 /* Display: Pearson User Table View */
 $handler = $view->new_display('block', 'Pearson User Table View', 'block_1');
