@@ -12,22 +12,19 @@ $view->disabled = FALSE; /* Edit this to true to make a default view disabled in
 /* Display: Master */
 $handler = $view->new_display('default', 'Master', 'default');
 $handler->display->display_options['title'] = 'pearson user';
+$handler->display->display_options['css_class'] = 'pearson-user-table';
+$handler->display->display_options['use_ajax'] = TRUE;
 $handler->display->display_options['use_more_always'] = FALSE;
 $handler->display->display_options['access']['type'] = 'perm';
 $handler->display->display_options['access']['perm'] = 'access user profiles';
 $handler->display->display_options['cache']['type'] = 'none';
 $handler->display->display_options['query']['type'] = 'views_query';
 $handler->display->display_options['exposed_form']['type'] = 'basic';
-$handler->display->display_options['pager']['type'] = 'none';
+$handler->display->display_options['pager']['type'] = 'mini';
+$handler->display->display_options['pager']['options']['items_per_page'] = '5';
 $handler->display->display_options['pager']['options']['offset'] = '0';
+$handler->display->display_options['pager']['options']['id'] = '0';
 $handler->display->display_options['style_plugin'] = 'table';
-$handler->display->display_options['style_options']['grouping'] = array(
-  0 => array(
-    'field' => 'rid',
-    'rendered' => 1,
-    'rendered_strip' => 0,
-  ),
-);
 $handler->display->display_options['style_options']['columns'] = array(
   'name' => 'name',
   'rid' => 'rid',
@@ -67,26 +64,38 @@ $handler->display->display_options['style_options']['info'] = array(
 $handler->display->display_options['fields']['name']['id'] = 'name';
 $handler->display->display_options['fields']['name']['table'] = 'users';
 $handler->display->display_options['fields']['name']['field'] = 'name';
-$handler->display->display_options['fields']['name']['label'] = '';
 $handler->display->display_options['fields']['name']['alter']['word_boundary'] = FALSE;
 $handler->display->display_options['fields']['name']['alter']['ellipsis'] = FALSE;
-/* Field: User: Roles */
-$handler->display->display_options['fields']['rid']['id'] = 'rid';
-$handler->display->display_options['fields']['rid']['table'] = 'users_roles';
-$handler->display->display_options['fields']['rid']['field'] = 'rid';
 /* Field: User: Pearson User ID */
 $handler->display->display_options['fields']['field_pearson_user_id']['id'] = 'field_pearson_user_id';
 $handler->display->display_options['fields']['field_pearson_user_id']['table'] = 'field_data_field_pearson_user_id';
 $handler->display->display_options['fields']['field_pearson_user_id']['field'] = 'field_pearson_user_id';
+$handler->display->display_options['fields']['field_pearson_user_id']['label'] = 'Pearson ID';
+$handler->display->display_options['fields']['field_pearson_user_id']['exclude'] = TRUE;
 /* Field: User: Pearson Username */
 $handler->display->display_options['fields']['field_pearson_username']['id'] = 'field_pearson_username';
 $handler->display->display_options['fields']['field_pearson_username']['table'] = 'field_data_field_pearson_username';
 $handler->display->display_options['fields']['field_pearson_username']['field'] = 'field_pearson_username';
+$handler->display->display_options['fields']['field_pearson_username']['label'] = 'Username';
+$handler->display->display_options['fields']['field_pearson_username']['exclude'] = TRUE;
+$handler->display->display_options['fields']['field_pearson_username']['alter']['max_length'] = '14';
+$handler->display->display_options['fields']['field_pearson_username']['alter']['word_boundary'] = FALSE;
+$handler->display->display_options['fields']['field_pearson_username']['alter']['trim'] = TRUE;
+/* Field: User: Roles */
+$handler->display->display_options['fields']['rid']['id'] = 'rid';
+$handler->display->display_options['fields']['rid']['table'] = 'users_roles';
+$handler->display->display_options['fields']['rid']['field'] = 'rid';
+$handler->display->display_options['fields']['rid']['label'] = 'Role';
+$handler->display->display_options['fields']['rid']['element_label_colon'] = FALSE;
 /* Sort criterion: User: Created date */
 $handler->display->display_options['sorts']['created']['id'] = 'created';
 $handler->display->display_options['sorts']['created']['table'] = 'users';
 $handler->display->display_options['sorts']['created']['field'] = 'created';
 $handler->display->display_options['sorts']['created']['order'] = 'DESC';
+/* Sort criterion: User: Name */
+$handler->display->display_options['sorts']['name']['id'] = 'name';
+$handler->display->display_options['sorts']['name']['table'] = 'users';
+$handler->display->display_options['sorts']['name']['field'] = 'name';
 /* Contextual filter: User: Uid */
 $handler->display->display_options['arguments']['uid']['id'] = 'uid';
 $handler->display->display_options['arguments']['uid']['table'] = 'users';
@@ -102,7 +111,33 @@ $handler->display->display_options['filters']['status']['field'] = 'status';
 $handler->display->display_options['filters']['status']['value'] = '1';
 $handler->display->display_options['filters']['status']['group'] = 1;
 $handler->display->display_options['filters']['status']['expose']['operator'] = FALSE;
+/* Filter criterion: User: Roles */
+$handler->display->display_options['filters']['rid']['id'] = 'rid';
+$handler->display->display_options['filters']['rid']['table'] = 'users_roles';
+$handler->display->display_options['filters']['rid']['field'] = 'rid';
+$handler->display->display_options['filters']['rid']['value'] = array(
+  13 => '13',
+  14 => '14',
+  15 => '15',
+);
+$handler->display->display_options['filters']['rid']['exposed'] = TRUE;
+$handler->display->display_options['filters']['rid']['expose']['operator_id'] = 'rid_op';
+$handler->display->display_options['filters']['rid']['expose']['label'] = 'Role';
+$handler->display->display_options['filters']['rid']['expose']['operator'] = 'rid_op';
+$handler->display->display_options['filters']['rid']['expose']['identifier'] = 'rid';
+$handler->display->display_options['filters']['rid']['expose']['remember_roles'] = array(
+  2 => '2',
+  1 => 0,
+  3 => 0,
+  13 => 0,
+  14 => 0,
+  15 => 0,
+);
+$handler->display->display_options['filters']['rid']['expose']['reduce'] = TRUE;
 
 /* Display: Page */
 $handler = $view->new_display('page', 'Page', 'page');
 $handler->display->display_options['path'] = 'user/%/add';
+
+/* Display: Pearson User Table View */
+$handler = $view->new_display('block', 'Pearson User Table View', 'block_1');
