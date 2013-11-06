@@ -19,7 +19,7 @@ $handler->display->display_options['cache']['type'] = 'none';
 $handler->display->display_options['query']['type'] = 'views_query';
 $handler->display->display_options['exposed_form']['type'] = 'basic';
 $handler->display->display_options['pager']['type'] = 'full';
-$handler->display->display_options['pager']['options']['items_per_page'] = '10';
+$handler->display->display_options['pager']['options']['items_per_page'] = '7';
 $handler->display->display_options['pager']['options']['offset'] = '0';
 $handler->display->display_options['pager']['options']['id'] = '0';
 $handler->display->display_options['pager']['options']['quantity'] = '9';
@@ -53,6 +53,12 @@ $handler->display->display_options['style_options']['info'] = array(
     'empty_column' => 0,
   ),
 );
+/* Header: Global: PHP */
+$handler->display->display_options['header']['php']['id'] = 'php';
+$handler->display->display_options['header']['php']['table'] = 'views';
+$handler->display->display_options['header']['php']['field'] = 'php';
+$handler->display->display_options['header']['php']['php_output'] = '<?php echo l(\'View all courses\', \'pearson-courses\'); ?>
+';
 /* Field: Content: Title */
 $handler->display->display_options['fields']['title']['id'] = 'title';
 $handler->display->display_options['fields']['title']['table'] = 'node';
@@ -94,7 +100,6 @@ $handler->display->display_options['filters']['field_pearson_course_number_value
 $handler->display->display_options['filters']['field_pearson_course_number_value']['exposed'] = TRUE;
 $handler->display->display_options['filters']['field_pearson_course_number_value']['expose']['operator_id'] = 'field_pearson_course_number_value_op';
 $handler->display->display_options['filters']['field_pearson_course_number_value']['expose']['label'] = 'Course Number';
-$handler->display->display_options['filters']['field_pearson_course_number_value']['expose']['description'] = 'Find a Pearson course';
 $handler->display->display_options['filters']['field_pearson_course_number_value']['expose']['operator'] = 'field_pearson_course_number_value_op';
 $handler->display->display_options['filters']['field_pearson_course_number_value']['expose']['identifier'] = 'field_pearson_course_number_value';
 $handler->display->display_options['filters']['field_pearson_course_number_value']['expose']['remember'] = TRUE;
