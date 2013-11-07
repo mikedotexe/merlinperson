@@ -74,6 +74,7 @@
 	<div id="iforget">
 		 <a href="#" class="pslideshow" title="Sample Content for Competition"></a>
 		<!-- <img src="<?php global $base_url; echo $base_url; ?>/sites/all/themes/danland/images/uhh/uhhslideshow2.png"/> -->
+		<img class="element-hidden" src="<?php global $base_url; echo $base_url; ?>/sites/all/themes/danland/images/uhh/uhhslideshow2-sample.png"/>
 	</div>
 <?php endif; ?>
 <!-- <div id="slideshow-wrapper">
