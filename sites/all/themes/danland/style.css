@@ -1608,3 +1608,27 @@ div.pearson-course-table table, table.sticky-table {
 a.courseentry img {
 	float: right;
 }
+
+.psidebar {
+ /*margin-bottom: 10px;*/
+ width: 229px;
+ height:286px;
+ display:block;
+ background:transparent url('images/mp/sidebar.png') center top no-repeat;
+}
+
+.psidebar:hover {
+   background-image: url('images/mp/sidebar-sample.png');
+}
+.psports {
+ /*margin-bottom: 10px;*/
+ width: 230px;
+ height:375px;
+ display:block;
+ background:transparent url('images/uhh/sports.png') center top no-repeat;
+}
+
+.psports:hover {
+   background-image: url('images/uhh/sports-sample.png');
+}
+
