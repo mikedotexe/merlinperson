@@ -1631,4 +1631,26 @@ a.courseentry img {
 .psports:hover {
    background-image: url('images/uhh/sports-sample.png');
 }
+.pfrontnode {
+ /*margin-bottom: 10px;*/
+ width: 467px;
+ height:591px;
+ display:block;
+ background:transparent url('images/uhh/frontpage.png') center top no-repeat;
+}
+
+.pfrontnode:hover {
+   background-image: url('images/uhh/frontpage-sample.png');
+}
+.pslideshow {
+ /*margin-bottom: 10px;*/
+ width: 966px;
+ height:444px;
+ display:block;
+ background:transparent url('images/uhh/uhhslideshow2.png') center top no-repeat;
+}
+
+.pslideshow:hover {
+   background-image: url('images/uhh/uhhslideshow2-sample.png');
+}
 

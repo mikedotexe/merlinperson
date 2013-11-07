@@ -72,7 +72,8 @@
 
 <?php if($is_front): ?>
 	<div id="iforget">
-		<img src="<?php global $base_url; echo $base_url; ?>/sites/all/themes/danland/images/uhh/uhhslideshow2.png"/>
+		 <a href="#" class="pslideshow" title="Sample Content for Competition"></a>
+		<!-- <img src="<?php global $base_url; echo $base_url; ?>/sites/all/themes/danland/images/uhh/uhhslideshow2.png"/> -->
 	</div>
 <?php endif; ?>
 <!-- <div id="slideshow-wrapper">
