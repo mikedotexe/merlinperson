@@ -693,22 +693,24 @@ function PearsonUpdateOrAdd($item){
 	
 	// if there's no new info - hash is same - then let's get out of here
 	
-	if ($findCourseID == '8930875'){
-		// debugging
-		$serialItem = serialize($item);
-		$computedHash = hash("crc32b", $serialItem);
-		watchdog('db', 'computed for mine is ' . $computedHash . ' - ' . $isNewInfo . 'end');		
-		// watchdog('db', 'this one');
-	}
+	//TODO think i can remove the if block below
+	// if ($findCourseID == '8930875'){
+		// // debugging
+		// $serialItem = serialize($item);
+		// $computedHash = hash("crc32b", $serialItem);
+		// watchdog('db', 'computed for mine is ' . $computedHash . ' - ' . $isNewInfo . 'end');		
+		// // watchdog('db', 'this one');
+	// }
 	// this block structured this way becuase I recall trouble using || and negatives. can return to later, this will work
 	if (!empty($result)){ // if that course already exists
 		if ($isNewInfo == FALSE){ // and the hashes are the same
 			return;
 		}		
 	}
-	if ($findCourseID == '8930875'){
-		watchdog('db', 'made it past');
-	}
+	//TODO think i can remove the if block below
+	// if ($findCourseID == '8930875'){
+		// watchdog('db', 'made it past');
+	// }
 	// begin - add users	
 	  // we'll be using this below to add users to a course
 	  $item->entity_reference = array(); 
@@ -1749,4 +1751,8 @@ function subPearsonCourse(){
 		return $decoded_response;
 	}	
 		
+}
+
+function _rule_announcement_update($node){
+	dsm($node, 'node from rule');
 }
