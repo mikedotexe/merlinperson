@@ -96,6 +96,56 @@ $data = array(
         ),
       ),
     ),
+    'field_pearson_goal_percent' => array(
+      'translatable' => '0',
+      'entity_types' => array(),
+      'settings' => array(
+        'decimal_separator' => '.',
+      ),
+      'storage' => array(
+        'type' => 'field_sql_storage',
+        'settings' => array(),
+        'module' => 'field_sql_storage',
+        'active' => '1',
+        'details' => array(
+          'sql' => array(
+            'FIELD_LOAD_CURRENT' => array(
+              'field_data_field_pearson_goal_percent' => array(
+                'value' => 'field_pearson_goal_percent_value',
+              ),
+            ),
+            'FIELD_LOAD_REVISION' => array(
+              'field_revision_field_pearson_goal_percent' => array(
+                'value' => 'field_pearson_goal_percent_value',
+              ),
+            ),
+          ),
+        ),
+      ),
+      'foreign keys' => array(),
+      'indexes' => array(),
+      'field_permissions' => array(
+        'type' => '0',
+      ),
+      'field_name' => 'field_pearson_goal_percent',
+      'type' => 'number_float',
+      'module' => 'number',
+      'active' => '1',
+      'locked' => '0',
+      'cardinality' => '1',
+      'deleted' => '0',
+      'columns' => array(
+        'value' => array(
+          'type' => 'float',
+          'not null' => FALSE,
+        ),
+      ),
+      'bundles' => array(
+        'node' => array(
+          0 => 'pearson_goal',
+        ),
+      ),
+    ),
     'field_pearson_goal_user' => array(
       'translatable' => '0',
       'entity_types' => array(),
@@ -217,6 +267,52 @@ $data = array(
         'default_value' => NULL,
         'default_value_function' => '',
         'field_name' => 'field_pearson_goal_course',
+        'entity_type' => 'node',
+        'bundle' => 'pearson_goal',
+        'deleted' => '0',
+      ),
+    ),
+    'field_pearson_goal_percent' => array(
+      0 => array(
+        'label' => 'Goal (percent)',
+        'widget' => array(
+          'weight' => '-1',
+          'type' => 'number',
+          'module' => 'number',
+          'active' => 0,
+          'settings' => array(),
+        ),
+        'settings' => array(
+          'min' => '0',
+          'max' => '100',
+          'prefix' => '',
+          'suffix' => '%',
+          'user_register_form' => FALSE,
+        ),
+        'display' => array(
+          'default' => array(
+            'label' => 'above',
+            'type' => 'number_decimal',
+            'settings' => array(
+              'thousand_separator' => ' ',
+              'decimal_separator' => '.',
+              'scale' => 2,
+              'prefix_suffix' => TRUE,
+            ),
+            'module' => 'number',
+            'weight' => 3,
+          ),
+          'teaser' => array(
+            'type' => 'hidden',
+            'label' => 'above',
+            'settings' => array(),
+            'weight' => 0,
+          ),
+        ),
+        'required' => 0,
+        'description' => 'Enter the percent you\'re aiming for in this class',
+        'default_value' => NULL,
+        'field_name' => 'field_pearson_goal_percent',
         'entity_type' => 'node',
         'bundle' => 'pearson_goal',
         'deleted' => '0',
