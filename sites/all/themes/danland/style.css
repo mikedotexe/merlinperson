@@ -1662,3 +1662,6 @@ a.courseentry img {
   box-shadow: 0 0 .5em #000000;
 }
 
+li { 
+	list-style-image: url(images/uhh/pearson-ul.png); 
+}
