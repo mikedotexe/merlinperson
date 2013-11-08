@@ -1614,43 +1614,51 @@ a.courseentry img {
  width: 229px;
  height:286px;
  display:block;
- background:transparent url('images/mp/sidebar.png') center top no-repeat;
+ /*background:transparent url('images/mp/sidebar.png') center top no-repeat;*/
+ background:transparent url('images/mp/sidebar-sample.png') center top no-repeat;
 }
 
 .psidebar:hover {
-   background-image: url('images/mp/sidebar-sample.png');
+   /*background-image: url('images/mp/sidebar-sample.png');*/
+  box-shadow: 0 0 .5em #000000;
 }
 .psports {
  /*margin-bottom: 10px;*/
  width: 230px;
  height:375px;
  display:block;
- background:transparent url('images/uhh/sports.png') center top no-repeat;
+ /*background:transparent url('images/uhh/sports.png') center top no-repeat;*/
+ background:transparent url('images/uhh/sports-sample.png') center top no-repeat;
 }
 
 .psports:hover {
-   background-image: url('images/uhh/sports-sample.png');
+   /*background-image: url('images/uhh/sports-sample.png');*/
+  box-shadow: 0 0 .5em #000000;
 }
 .pfrontnode {
  /*margin-bottom: 10px;*/
  width: 467px;
  height:591px;
  display:block;
- background:transparent url('images/uhh/frontpage.png') center top no-repeat;
+ background:transparent url('images/uhh/frontpage-sample.png') center top no-repeat;
+ /*background:transparent url('images/uhh/frontpage.png') center top no-repeat;*/
 }
 
 .pfrontnode:hover {
-   background-image: url('images/uhh/frontpage-sample.png');
+   /*background-image: url('images/uhh/frontpage-sample.png');*/
+  box-shadow: 0 0 .5em #000000;
 }
 .pslideshow {
  /*margin-bottom: 10px;*/
  width: 966px;
  height:444px;
  display:block;
- background:transparent url('images/uhh/uhhslideshow2.png') center top no-repeat;
+ background:transparent url('images/uhh/uhhslideshow2-sample.png') center top no-repeat;
+ /*background:transparent url('images/uhh/uhhslideshow2.png') center top no-repeat;*/
 }
 
 .pslideshow:hover {
-   background-image: url('images/uhh/uhhslideshow2-sample.png');
+   /*background-image: url('images/uhh/uhhslideshow2-sample.png');*/
+  box-shadow: 0 0 .5em #000000;
 }
 
