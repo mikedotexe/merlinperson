@@ -902,10 +902,23 @@ function pearson_mp_form_alter(&$form, &$form_state, $form_id){
 function pearson_mp_form_user_profile_form_alter(&$form, &$form_state){
 	// dsm(_decryptFromUID(1));
 	// the below used to do the encryption
-	// $form['#validate'][] = '_profile_submit';
+	$form['#validate'][] = '_profile_submit'; // see if phone number is correct
 }
 
 function _profile_submit(&$form, &$form_state){
+	// dsm($form, 'form');
+	// dsm($form_state, 'fs');
+	
+	// check to see if phone number is 10 characters long and numeric
+	$phone = $form_state['values']['field_pearson_user_phone'][LANGUAGE_NONE][0]['value'];
+	$isBroken = FALSE;
+	if (!is_numeric($phone)) $isBroken = TRUE;
+	if (strlen($phone) != 10) $isBroken = TRUE;
+	
+	if ($isBroken){
+		form_set_error('field_pearson_user_phone', 'Please enter a valid 10-digit phone number like 8085551234');
+	}
+	
 	// dsm($form_state, 'fs');
 	// kept commented out in case I want to use encryption later
 	// $enc = encrypt($form_state['values']['field_pearson_prof_password'][LANGUAGE_NONE][0]['value']);
