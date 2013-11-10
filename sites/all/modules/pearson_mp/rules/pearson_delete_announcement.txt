@@ -1,0 +1,15 @@
+{ "rules_pearson_delete_announcement" : {
+    "LABEL" : "pearson delete announcement",
+    "PLUGIN" : "reaction rule",
+    "REQUIRES" : [ "rules", "php" ],
+    "ON" : [ "node_delete" ],
+    "IF" : [
+      { "node_is_of_type" : {
+          "node" : [ "node" ],
+          "type" : { "value" : { "pearson_announcement" : "pearson_announcement" } }
+        }
+      }
+    ],
+    "DO" : [ { "php_eval" : { "code" : "_remove_hash(\u0027ann\u0027, $node);" } } ]
+  }
+}

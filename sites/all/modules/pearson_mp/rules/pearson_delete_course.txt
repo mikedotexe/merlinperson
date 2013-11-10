@@ -1,0 +1,17 @@
+{ "rules_pearson_delete_course" : {
+    "LABEL" : "pearson delete course",
+    "PLUGIN" : "reaction rule",
+    "REQUIRES" : [ "rules", "php" ],
+    "ON" : [ "node_delete" ],
+    "IF" : [
+      { "node_is_of_type" : {
+          "node" : [ "node" ],
+          "type" : { "value" : { "pearson_course" : "pearson_course" } }
+        }
+      }
+    ],
+    "DO" : [
+      { "php_eval" : { "code" : "_remove_hash(\u0027course\u0027, $node);" } }
+    ]
+  }
+}

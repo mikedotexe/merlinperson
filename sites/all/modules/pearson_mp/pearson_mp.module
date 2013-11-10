@@ -1755,9 +1755,9 @@ function subPearsonCourse(){
 
 function _rule_announcement($node, $update = FALSE){
 	$node = json_decode('{"type":"pearson_announcement","uid":1,"changed":1383943382,"status":1,"comment":0,"promote":0,"moderate":0,"sticky":0,"language":"und","field_pearson_ann_id":{"und":[{"value":29947550}]},"field_pearson_ann_subject":{"und":[{"value":"Extra credit opportunity! "}]},"field_pearson_ann_text":{"und":[{"value":"There is a guest speaker coming in from Microsoft, if you attend youll be able to get 5 points extra credit for a two-paragraph summary of his speech."}]},"field_pearson_ann_submitter":{"und":[{"value":"Kory Manahan"}]},"field_pearson_ann_startdisplayda":{"und":[{"value":"2011-01-19T07:00:00Z","timezone":"Pacific\/Honolulu","timezone_db":"UTC","date_type":"date"}]},"field_pearson_ann_enddisplaydate":{"und":[{"value":"2030-01-01T06:59:00Z","timezone":"Pacific\/Honolulu","timezone_db":"UTC","date_type":"date"}]},"title":"Extra credit opportunity! ","nid":"258","vid":"258","field_pearson_ann_course":{"und":[{"target_id":"227","target_type":"node"}]},"original":{"vid":"258","uid":"1","title":"Extra credit opportunity ","log":"","status":"1","comment":"0","promote":"0","sticky":"0","vuuid":"ad2b7a51-da09-43d5-961d-a2102c0e82fc","nid":"258","type":"pearson_announcement","language":"und","created":"1383942962","changed":"1383942962","tnid":"0","translate":"0","uuid":"c8e5ba90-4524-4577-acd0-663c614ecc81","revision_timestamp":"1383942962","revision_uid":"1","field_pearson_ann_enddisplaydate":{"und":[{"value":"2030-01-01T06:59:00Z","timezone":"Pacific\/Honolulu","timezone_db":"UTC","date_type":"date"}]},"field_pearson_ann_id":{"und":[{"value":"29947550","format":null,"safe_value":"29947550"}]},"field_pearson_ann_startdisplayda":{"und":[{"value":"2011-01-19T07:00:00Z","timezone":"Pacific\/Honolulu","timezone_db":"UTC","date_type":"date"}]},"field_pearson_ann_subject":{"und":[{"value":"Extra credit opportunity ","format":null,"safe_value":"Extra credit opportunity "}]},"field_pearson_ann_submitter":{"und":[{"value":"Kory Manahan","format":null,"safe_value":"Kory Manahan"}]},"field_pearson_ann_text":{"und":[{"value":"There is a guest speaker coming in from Microsoft, if you attend youll be able to get 5 points extra credit for a two-paragraph summary of his speech.","format":null,"safe_value":"There is a guest speaker coming in from Microsoft, if you attend youll be able to get 5 points extra credit for a two-paragraph summary of his speech."}]},"field_pearson_ann_course":{"und":[{"target_id":"227"}]},"rdf_mapping":{"rdftype":["sioc:Item","foaf:Document"],"title":{"predicates":["dc:title"]},"created":{"predicates":["dc:date","dc:created"],"datatype":"xsd:dateTime","callback":"date_iso8601"},"changed":{"predicates":["dc:modified"],"datatype":"xsd:dateTime","callback":"date_iso8601"},"body":{"predicates":["content:encoded"]},"uid":{"predicates":["sioc:has_creator"],"type":"rel"},"name":{"predicates":["foaf:name"]},"comment_count":{"predicates":["sioc:num_replies"],"datatype":"xsd:integer"},"last_activity":{"predicates":["sioc:last_activity_date"],"datatype":"xsd:dateTime","callback":"date_iso8601"}},"ajax_example":{"example_1":0,"example_2":""},"cid":0,"last_comment_timestamp":"1383942962","last_comment_name":"","last_comment_uid":"1","comment_count":0,"name":"mpurvis","picture":"1","data":"b:0;"},"is_new":false,"created":1383943382,"timestamp":1383943382,"uuid":"2b8165f3-a6e4-4d15-ad6f-c5bffcb2d99a","vuuid":"1dda29fb-c1ec-4477-956a-9749dd3fc21f"}');
-	dsm($node, 'node');
+	// dsm($node, 'node');
 	$nodeObj = node_load($node->field_pearson_ann_course->und[0]->target_id);
-	dsm($nodeObj, 'loaded course');
+	// dsm($nodeObj, 'loaded course');
 
 	$subject = $node->field_pearson_ann_subject->und[0]->value;
 	$text = $node->field_pearson_ann_text->und[0]->value;
@@ -1765,16 +1765,39 @@ function _rule_announcement($node, $update = FALSE){
 		
 	$courseCode = $nodeObj->field_pearson_course_code[LANGUAGE_NONE][0]['value'];
 	
-	dsm($subject);
-	dsm($text);
-	dsm($courseCode);
+	// dsm($subject);
+	// dsm($text);
+	// dsm($courseCode);
 	
+	// determine if new or updated announcement
+	$msg = '';
 	if ($update){
 		$msg = 'Updated announcement for ' . $courseCode . ': ' . $subject . ' - ' . $text;
 	} else {
-		// get student information
-		$numbers = array();
+		$msg = 'New announcement for ' . $courseCode . ': ' . $subject . ' - ' . $text;
+	}	
+
+	// get student information, send text to all people who have entered their cell number
+	$numbers = array();
+	foreach ($nodeObj->field_pearson_course_users[LANGUAGE_NONE] as $key => $value) {
+		$uid = $value['target_id'];
+		$userObj = user_load($uid);
+		if (!empty($userObj->field_pearson_user_phone)){
+			// this user has entered a phone number, send a text message
+			$number = $userObj->field_pearson_user_phone[LANGUAGE_NONE][0]['value'];
+			if (function_exists('twilio_send')) twilio_send($number, $msg);
+		} 
 	}
-	return $msg;
-	// watchdog('db', $j);
+}
+
+/*
+ * $type is 'ann' or 'course'
+ * $node is node deleted by Rules
+ */
+function _remove_hash($type, $node){
+	$pid = $node->field_pearson_ann_id[LANGUAGE_NONE][0]['value'];
+	db_delete('pearson_mp_hashes')
+	  ->condition('type', $type)
+	  ->condition('description', $pid)
+	  ->execute();
 }
