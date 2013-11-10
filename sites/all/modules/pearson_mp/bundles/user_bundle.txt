@@ -72,6 +72,75 @@ $data = array(
         ),
       ),
     ),
+    'field_pearson_user_phone' => array(
+      'translatable' => '0',
+      'entity_types' => array(),
+      'settings' => array(
+        'max_length' => '11',
+      ),
+      'storage' => array(
+        'type' => 'field_sql_storage',
+        'settings' => array(),
+        'module' => 'field_sql_storage',
+        'active' => '1',
+        'details' => array(
+          'sql' => array(
+            'FIELD_LOAD_CURRENT' => array(
+              'field_data_field_pearson_user_phone' => array(
+                'value' => 'field_pearson_user_phone_value',
+                'format' => 'field_pearson_user_phone_format',
+              ),
+            ),
+            'FIELD_LOAD_REVISION' => array(
+              'field_revision_field_pearson_user_phone' => array(
+                'value' => 'field_pearson_user_phone_value',
+                'format' => 'field_pearson_user_phone_format',
+              ),
+            ),
+          ),
+        ),
+      ),
+      'foreign keys' => array(
+        'format' => array(
+          'table' => 'filter_format',
+          'columns' => array(
+            'format' => 'format',
+          ),
+        ),
+      ),
+      'indexes' => array(
+        'format' => array(
+          0 => 'format',
+        ),
+      ),
+      'field_permissions' => array(
+        'type' => '1',
+      ),
+      'field_name' => 'field_pearson_user_phone',
+      'type' => 'text',
+      'module' => 'text',
+      'active' => '1',
+      'locked' => '0',
+      'cardinality' => '1',
+      'deleted' => '0',
+      'columns' => array(
+        'value' => array(
+          'type' => 'varchar',
+          'length' => '11',
+          'not null' => FALSE,
+        ),
+        'format' => array(
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => FALSE,
+        ),
+      ),
+      'bundles' => array(
+        'user' => array(
+          0 => 'user',
+        ),
+      ),
+    ),
     'field_pearson_username' => array(
       'translatable' => '0',
       'entity_types' => array(),
@@ -172,6 +241,40 @@ $data = array(
         'description' => '',
         'default_value' => NULL,
         'field_name' => 'field_pearson_user_id',
+        'entity_type' => 'user',
+        'bundle' => 'user',
+        'deleted' => '0',
+      ),
+    ),
+    'field_pearson_user_phone' => array(
+      0 => array(
+        'label' => 'Phone Number',
+        'widget' => array(
+          'weight' => '5',
+          'type' => 'text_textfield',
+          'module' => 'text',
+          'active' => 1,
+          'settings' => array(
+            'size' => '60',
+          ),
+        ),
+        'settings' => array(
+          'text_processing' => '0',
+          'user_register_form' => 0,
+        ),
+        'display' => array(
+          'default' => array(
+            'label' => 'above',
+            'type' => 'text_default',
+            'settings' => array(),
+            'module' => 'text',
+            'weight' => 11,
+          ),
+        ),
+        'required' => 0,
+        'description' => 'If you\'d like to get SMS text message alerts for Pearson Announcements, enter phone number. Regular text messaging rates apply. Format is 8085551234',
+        'default_value' => NULL,
+        'field_name' => 'field_pearson_user_phone',
         'entity_type' => 'user',
         'bundle' => 'user',
         'deleted' => '0',
