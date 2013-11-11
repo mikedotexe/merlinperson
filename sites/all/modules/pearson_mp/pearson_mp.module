@@ -1537,11 +1537,12 @@ function pearson_mp_user_view($account, $view_mode, $langcode){
 		
 		// $view .= l('Course Entry for ' . $pearsonCC, 'course-entry', array('query' => array('UserID' => $pearsonUID, 'UserName' => $pearsonUname, 'CourseID' => $pearsonCID), 'html' => TRUE, 'attributes' => array('target' => '_blank', 'class' => 'clearfix')));
 		global $base_url;
-		$img = '<img src="' . $base_url. '/sites/all/themes/danland/images/uhh/courseentry-wide.png" alt="Enter Course"/>';		
+		$img = '<div class="floatright"><img src="' . $base_url. '/sites/all/themes/danland/images/uhh/courseentry-wide200.png" alt="Enter Course"/><br/>';		
 		$view .= l($img, 'course-entry', array('query' => array('UserID' => $pearsonUID, 'UserName' => $pearsonUname, 'CourseID' => $pearsonCID), 'html' => TRUE, 'attributes' => array('target' => '_blank', 'alt' => 'Enter Course', 'class' => array('courseentry'))));
 		// add link to see syllabus
-		$syllabusImg = '<img src="' . $base_url. '/sites/all/themes/danland/images/uhh/syllabus.png" alt="View Syllabus"/>';
+		$syllabusImg = '<img src="' . $base_url. '/sites/all/themes/danland/images/uhh/syllabus200.png" alt="View Syllabus"/>';
 		$view .= l($syllabusImg, 'syllabus', array('query' => array('CourseID' => $pearsonCID), 'html' => TRUE, 'attributes' => array('target' => '_blank', 'alt' => 'View Syllabus', 'class' => array('viewsyllabus'))));
+		$view .= '</div>'; // closes floatright div
 		
 		if (strpos($annView, 'view-content')){
 			// we have results
