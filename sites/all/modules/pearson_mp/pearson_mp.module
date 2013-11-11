@@ -905,6 +905,27 @@ function pearson_mp_form_user_profile_form_alter(&$form, &$form_state){
 	$form['#validate'][] = '_profile_submit'; // see if phone number is correct
 }
 
+function pearson_mp_form_pearson_goal_node_form_alter(&$form, &$form_state){
+	// dsm($form, 'form');
+	// dsm($_GET, 'get');
+	
+	// see if this is an EDIT or a NEW node being created
+	if (empty($form['nid']['#value'])){
+		// new node being created
+		$userObj = user_load($_GET['goal_user']);
+		$courseObj = node_load($_GET['goal_course']);
+		
+		// dsm($userObj, 'user obj');
+		// dsm($courseObj, 'course obj');
+		
+		$form['title']['#default_value'] = 'Goal: ' . $userObj->name . ' for ' . $courseObj->field_pearson_course_code[LANGUAGE_NONE][0]['value'];
+		$form['field_pearson_goal_course'][LANGUAGE_NONE][0]['target_id']['#default_value'] = $courseObj->title . " ({$courseObj->nid})"; // add this to the entity reference for course	
+		$form['field_pearson_goal_user'][LANGUAGE_NONE][0]['target_id']['#default_value'] = $userObj->name . " ({$userObj->uid})"; // add this to the entity reference for course			
+	}
+	$form['field_pearson_goal_user']['#disabled'] = TRUE; // add this to the entity reference for course
+	$form['field_pearson_goal_course']['#disabled'] = TRUE; // add this to the entity reference for course
+}
+
 function _profile_submit(&$form, &$form_state){
 	// dsm($form, 'form');
 	// dsm($form_state, 'fs');
@@ -1516,7 +1537,7 @@ function pearson_mp_user_view($account, $view_mode, $langcode){
 			$goalLink = '';
 			if (empty($results)){
 				// they have not set a goal, give link to set goal
-				$goalLink = l('Set goal!', 'node/add/pearson-goal', array('query' => array('test1' => 'val1'), 'attributes' => array('target' => '_blank')));
+				$goalLink = l('Set goal!', 'node/add/pearson-goal', array('query' => array('goal_user' => $account->uid, 'goal_course' => $classNode->nid), 'attributes' => array('target' => '_blank')));
 			} else {
 				// they have a goal, give change link and the value
 				$goal = $results[0]->field_pearson_goal_percent_value;
