@@ -62,7 +62,8 @@ function example_page() {
 function _syllabus_page(){
 	$form = array();
 	// dsm($_GET, 'get');
-	$syllabusHTML = remoteOAuth1('/courses/' . $_GET['CourseID'] . '/syllabus', FALSE, FALSE);
+	$cid = isset($_GET['CourseID']) ? $_GET['CourseID'] : ''; 
+	$syllabusHTML = remoteOAuth1('/courses/' . $cid . '/syllabus', FALSE, FALSE);
 	$firstFive = substr($syllabusHTML, 0, 5);
 	
 	if ($firstFive == 'error'){
