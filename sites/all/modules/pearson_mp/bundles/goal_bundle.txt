@@ -225,7 +225,7 @@ $data = array(
   'instances' => array(
     'field_pearson_goal_course' => array(
       0 => array(
-        'label' => 'pearson goal course',
+        'label' => 'For Course',
         'widget' => array(
           'weight' => '-2',
           'type' => 'entityreference_autocomplete',
@@ -247,13 +247,13 @@ $data = array(
         ),
         'display' => array(
           'default' => array(
-            'label' => 'above',
+            'label' => 'inline',
             'type' => 'entityreference_label',
+            'weight' => '2',
             'settings' => array(
               'link' => FALSE,
             ),
             'module' => 'entityreference',
-            'weight' => 2,
           ),
           'teaser' => array(
             'type' => 'hidden',
@@ -291,8 +291,9 @@ $data = array(
         ),
         'display' => array(
           'default' => array(
-            'label' => 'above',
+            'label' => 'inline',
             'type' => 'number_decimal',
+            'weight' => '3',
             'settings' => array(
               'thousand_separator' => ' ',
               'decimal_separator' => '.',
@@ -300,7 +301,6 @@ $data = array(
               'prefix_suffix' => TRUE,
             ),
             'module' => 'number',
-            'weight' => 3,
           ),
           'teaser' => array(
             'type' => 'hidden',
@@ -309,7 +309,7 @@ $data = array(
             'weight' => 0,
           ),
         ),
-        'required' => 0,
+        'required' => 1,
         'description' => 'Enter the percent you\'re aiming for in this class',
         'default_value' => NULL,
         'field_name' => 'field_pearson_goal_percent',
@@ -320,7 +320,7 @@ $data = array(
     ),
     'field_pearson_goal_user' => array(
       0 => array(
-        'label' => 'pearson goal user',
+        'label' => 'For User',
         'widget' => array(
           'weight' => '-3',
           'type' => 'entityreference_autocomplete',
@@ -342,13 +342,13 @@ $data = array(
         ),
         'display' => array(
           'default' => array(
-            'label' => 'above',
+            'label' => 'inline',
             'type' => 'entityreference_label',
+            'weight' => '1',
             'settings' => array(
               'link' => FALSE,
             ),
             'module' => 'entityreference',
-            'weight' => 1,
           ),
           'teaser' => array(
             'type' => 'hidden',
