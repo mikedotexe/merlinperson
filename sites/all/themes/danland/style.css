@@ -1605,7 +1605,7 @@ div.pearson-course-table table, table.sticky-table {
 	margin-bottom: 1em;
 }
 
-a.courseentry img {
+a.courseentry img, a.viewsyllabus img {
 	float: right;
 }
 

@@ -59,12 +59,37 @@ function example_page() {
   return $build;
 }
 
+function _syllabus_page(){
+	$form = array();
+	// dsm($_GET, 'get');
+	$syllabusHTML = remoteOAuth1('/courses/' . $_GET['CourseID'] . '/syllabus', FALSE, FALSE);
+	$firstFive = substr($syllabusHTML, 0, 5);
+	
+	if ($firstFive == 'error'){
+		// this means there was an error getting it, which happens when there isn't a syllabus provided
+		$syllabusHTML = 'There was no syllabus found for this course. (You may want to try the two courses that were assigned to me.)';
+	}
+	
+	$form['ht'] = array(
+	 '#type' => 'markup',
+	 '#markup' => $syllabusHTML,
+	);
+	
+	return $form;
+}
+
 // hook_menu
 function pearson_mp_menu(){
 	$items = array();
   $items['example-charts'] = array(
     'title' => 'Example',
     'page callback' => 'example_page',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );	
+  $items['syllabus'] = array(
+    'title' => 'Course Information',
+    'page callback' => '_syllabus_page',
     'access arguments' => array('access content'),
     'type' => MENU_CALLBACK,
   );	
@@ -649,9 +674,9 @@ function remoteOAuth1($route, $ct_urlenc = FALSE, $jsonEncode = TRUE){
 		$msg = (is_object($decoded) && isset($decoded->error->message))?$decoded->error->message:"No message reported.";
 		$msg.= " Error ID: "; 
 		$msg.= (is_object($decoded) && isset($decoded->error->errorId) && !empty($decoded->error->errorId))?$decoded->error->errorId:'None provided';  
-	 	watchdog('pearson_mp', $msg . " - The API Server responded with ".$http_code.". Message was:".$info." route:". $route, NULL, WATCHDOG_CRITICAL);
+	 	@watchdog('pearson_mp', $msg . " - The API Server responded with ".$http_code.". Message was:".$info." route:". $route, NULL, WATCHDOG_CRITICAL);
 		//dsm($msg, "The API Server responded with ".$http_code.". Message was:"); 
-	 	return 'error, see log ' . $msg . " - The API Server responded with ".$http_code.". Message was:".$info." route:". $route;
+	 	return 'error, see log ' . $msg . " - The API Server responded with ".$http_code . " route:". $route;
 	// Else you have a successful response. 
 	} else {
 		// return $api_response;
@@ -1514,6 +1539,9 @@ function pearson_mp_user_view($account, $view_mode, $langcode){
 		global $base_url;
 		$img = '<img src="' . $base_url. '/sites/all/themes/danland/images/uhh/courseentry-wide.png" alt="Enter Course"/>';		
 		$view .= l($img, 'course-entry', array('query' => array('UserID' => $pearsonUID, 'UserName' => $pearsonUname, 'CourseID' => $pearsonCID), 'html' => TRUE, 'attributes' => array('target' => '_blank', 'alt' => 'Enter Course', 'class' => array('courseentry'))));
+		// add link to see syllabus
+		$syllabusImg = '<img src="' . $base_url. '/sites/all/themes/danland/images/uhh/syllabus.png" alt="View Syllabus"/>';
+		$view .= l($syllabusImg, 'syllabus', array('query' => array('CourseID' => $pearsonCID), 'html' => TRUE, 'attributes' => array('target' => '_blank', 'alt' => 'View Syllabus', 'class' => array('viewsyllabus'))));
 		
 		if (strpos($annView, 'view-content')){
 			// we have results
