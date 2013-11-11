@@ -542,7 +542,7 @@ function pearson_mp_cron_queue_info() {
   return $ret;
 }
 
-function remoteOAuth1($route, $ct_urlenc = FALSE){
+function remoteOAuth1($route, $ct_urlenc = FALSE, $jsonEncode = TRUE){
 	// Set up the variables necessary to make the Request 
 	$method          = 'GET'; 
 	$application_id  = variable_get('pearson_app_id');  //Your Application's ID/Key. Use for all campuses.
@@ -655,7 +655,8 @@ function remoteOAuth1($route, $ct_urlenc = FALSE){
 	// Else you have a successful response. 
 	} else {
 		// return $api_response;
-		$decoded_response = json_decode($api_response); 
+		$decoded_response = $api_response; // redundant, but oh well, must move fast
+		if ($jsonEncode) $decoded_response = json_decode($api_response); 
 		// dsm($decoded_response);
 		return $decoded_response;		
 	}	
@@ -1458,7 +1459,7 @@ function pearson_mp_user_view($account, $view_mode, $langcode){
 	drupal_add_library('system', 'drupal.collapse');
 	drupal_add_js('misc/form.js'); // don't know if its really required to collapsible fieldsets to work
 	drupal_add_js('misc/collapse.js');	
-	dsm($account, 'account');
+	// dsm($account, 'account');
 	$roles = $account->roles;
 	unset($roles[2]);
 	$printedRoles = implode(', ', $roles);
