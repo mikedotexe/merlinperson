@@ -66,7 +66,7 @@ function pearson_mp_theme() {
   return array(
     // Sample theme functions.
     'pearson_goal_container' => array(
-      'arguments' => array('content' => NULL),
+      'arguments' => array('content' => NULL, 'nid' => NULL),
     ),
   );
 }
@@ -76,9 +76,9 @@ function pearson_mp_theme() {
  */
 function theme_pearson_goal_container($vars) {
   // TODO: need to add a unique number to the end of it, so two classes don't get updated simultaneously
-  $output = '<div id="pearson-goal-num">';
+  $output = '<div id="pearson-goal-num' . $vars['nid'] . '"><span class="pearsonBig">';
   $output .= $vars['content'];
-  $output .= '</div>';
+  $output .= '</span></div>';
 
   return $output;
 }
@@ -155,7 +155,8 @@ function pearson_mp_animal($js = NULL, $step = NULL) {
 
   $form_info = array(
     'id' => 'animals',
-    'path' => "pearson_mp/" . ($js ? 'ajax' : 'nojs') . "/animal/%step",
+    'path' => "pearson_mp/" . ($js ? 'ajax' : 'nojs') . "/animal/" . arg(3) . '/' . arg(4),
+    // 'path' => "pearson_mp/" . ($js ? 'ajax' : 'nojs') . "/animal/%step",
     'show trail' => FALSE,
     'show back' => FALSE,
     'show cancel' => TRUE,
@@ -220,21 +221,27 @@ function pearson_mp_animal($js = NULL, $step = NULL) {
   // }
 // 
 
-	// mike: here we add the course and user info
   $form_state = array(
     'ajax' => $js,
     // Put our object and ID into the form state cache so we can easily find
     // it.
     'object_id' => $object_id,
     'object' => &$object,
-    'uid' => arg(3),
-    'nid' => arg(4),
   );
 
-  // Send this all off to our form. This is like drupal_get_form only wizardy.
-  ctools_include('wizard');
-  $form = ctools_wizard_multistep_form($form_info, $step, $form_state);
-  $output = drupal_render($form);
+	// mike: here we add the course and user info
+	$args = arg();
+	dsm($args, 'args');
+  if (count($args) == 5){
+  	// we want there to be the uid and nid passed in
+  	$form_state['uid'] = arg(3); 
+  	$form_state['nid'] = arg(4); 
+  }
+  $uid = $form_state['uid'];
+  $nid = $form_state['nid'];
+
+
+
 // 
   // if ($output === FALSE || !empty($form_state['complete'])) {
     // // This creates a string based upon the animal and its setting using
@@ -242,7 +249,42 @@ function pearson_mp_animal($js = NULL, $step = NULL) {
     // $animal = $animals[$object->type]['output']($object);
   // }
   
+  
+  
+  // see if there is an existing goal node for this user and course
+  
+  $query = db_select('field_data_field_pearson_goal_course', 'c');
+  $query->join('field_data_field_pearson_goal_user', 'u', 'c.entity_id = u.entity_id');
+  $query->join('field_data_field_pearson_goal_percent', 'p', 'u.entity_id = p.entity_id');
+  $query->fields('p', array('field_pearson_goal_percent_value'))
+    ->fields('c', array('entity_id'))
+  	->condition('u.field_pearson_goal_user_target_id', $uid)
+	->condition('c.field_pearson_goal_course_target_id', $nid);
+  $results = $query->execute()->fetch();
+  
+  dsm($results);  
+  
+  if (empty($results)){
+  	// NO GOAL for this person and course
+  	$form_state['hasGoal'] = FALSE;
+	$form_state['goalValue'] = '';
+	$form_state['goalID'] = '';
+  } else {
+  	// GOAL EXISTS for this person and course
+  	$form_state['hasGoal'] = TRUE;
+  	$form_state['goalValue'] = $results->field_pearson_goal_percent_value;
+	$form_state['goalID'] = $results->entity_id;
+  }
+  
   dsm($form_state, 'fs');
+  
+  // Send this all off to our form. This is like drupal_get_form only wizardy.
+  ctools_include('wizard');
+  $form = ctools_wizard_multistep_form($form_info, $step, $form_state);
+  // $form['goal']['#default_value'] = 'test';
+  $form['goal']['#value'] = $form_state['goalValue'];
+  dsm($form, 'form');
+  $output = drupal_render($form);  
 
   // If $output is FALSE, there was no actual form.
   
@@ -253,7 +295,15 @@ function pearson_mp_animal($js = NULL, $step = NULL) {
     if ($output === FALSE || !empty($form_state['complete'])) {
     	// dsm('first');
       // Dismiss the modal.
-      $commands[] = ajax_command_html('#pearson-goal-num', $form_state['values']['goal']);
+      // TODO: Validation
+      
+      _save_goal($form_state['hasGoal'], $form_state['goalValue'], $form_state['values']['goal'], $form_state['goalID'], $uid, $nid);
+      
+	  
+	  $goalLink = ctools_modal_text_button(t('Change goal'), "pearson_mp/nojs/animal/$uid/$uid", t('Set goal'),  'ctools-modal-ctools-sample-style');
+      $container = theme('pearson_goal_container', array('content' => "$goalLink <span class=\"pearsonBig\">{$form_state['values']['goal']}%</span>", 'nid' => $nid));
+    
+      $commands[] = ajax_command_html('#pearson-goal-num' . $nid, $container);
       $commands[] = ctools_modal_command_dismiss();
     }
     else if (!empty($form_state['cancel'])) {
@@ -295,12 +345,6 @@ function pearson_mp_wizard_cancel(&$form_state) {
 function pearson_mp_start($form, &$form_state) {
   $form_state['title'] = t('Set goal');
 
-  // $animals = ctools_ajax_sample_animals();
-  // foreach ($animals as $id => $animal) {
-    // $options[$id] = $animal['title'];
-  // }
-
-  
 	$form['goal'] = array(
 	  '#type' => 'textfield',
 	  '#title' => t('Goal'),
@@ -312,11 +356,63 @@ function pearson_mp_start($form, &$form_state) {
   return $form;
 }
 
+function _save_goal($hasGoal, $goalValue, $newValue, $goalID, $uid, $nid){
+	dsm($hasGoal, 'hasGoal');
+	dsm($goalValue, 'goalValue');
+	dsm($newValue, 'newValue');
+	dsm($goalID, 'goalID');
+	dsm($uid, 'uid in save goal');
+	dsm($nid, 'nid in save goal');
+	
+	$newNode = (object) NULL;
+	$newNode->type = 'pearson_goal';
+	$newNode->uid = 1;
+	$newNode->changed = strtotime("now");
+	$newNode->status = 1;
+	$newNode->comment = 0;
+	$newNode->promote = 0;
+	$newNode->moderate = 0;
+	$newNode->sticky = 0;
+	$newNode->language = 'und';
+				
+	$newNode->field_pearson_goal_course[LANGUAGE_NONE][0]['target_id'] = $nid; // add this to the entity reference for course
+	$newNode->field_pearson_goal_course[LANGUAGE_NONE][0]['target_type'] = 'node'; // required	
+	$newNode->field_pearson_goal_user[LANGUAGE_NONE][0]['target_id'] = $uid; // add this to the entity reference for course
+	$newNode->field_pearson_goal_user[LANGUAGE_NONE][0]['target_type'] = 'user'; // required			
+	$newNode->field_pearson_goal_percent[LANGUAGE_NONE][0]['value'] = $newValue; 	
+	
+	if ($hasGoal){
+		// Goal node exists
+		// if they're the same value, return
+		if ($goalValue == $newValue) return;
+		//updating node
+		$newNode->nid = $goalID;
+		$newNode->vid = $goalID; // will throw notice without this line						
+	} else {
+		// create new Goal node
+		$newNode->created = strtotime("now");	
+		$newNode->is_new = TRUE;
+		$newNode->title = "Goal: User $uid for Course $nid";		
+	}
+	
+	node_save($newNode);	
+	watchdog('pearson_mp', 'Created/updated goal for User ' . $uid . ' with Course ' . $nid);
+	 
+}
+
 // hook_menu
 function pearson_mp_menu(){
 	$items = array();
   $items['pearson_mp/%ctools_js/animal/%/%'] = array(
-      'title' => 'Animal',
+      'title' => 'Goal',
+      'page callback' => 'pearson_mp_animal',
+      'page arguments' => array(1),
+      'access callback' => TRUE,
+      'type' => MENU_CALLBACK,
+  );	  
+  
+  $items['pearson_mp/%ctools_js/animal'] = array(
+      'title' => 'Goal',
       'page callback' => 'pearson_mp_animal',
       'page arguments' => array(1),
       'access callback' => TRUE,
@@ -1846,7 +1942,7 @@ function pearson_mp_user_view($account, $view_mode, $langcode){
 				 // '#markup' => $textButton,
 				// );
 				
-				$container = theme('pearson_goal_container', array('content' => '<h1>' . t('Sample Content') . '</h1>'));						
+										
 				// $form['ajaContainer'] = array(
 				 // '#type' => 'markup',
 				 // '#markup' => $container,
@@ -1860,17 +1956,19 @@ function pearson_mp_user_view($account, $view_mode, $langcode){
 			if (empty($results)){
 				// they HAVE NO goal, give link to set goal
 				// $goalLink = l('Set goal!', 'node/add/pearson-goal', array('query' => array('goal_user' => $account->uid, 'goal_course' => $classNode->nid), 'attributes' => array('target' => '_blank')));
-				$goalLink = ctools_modal_text_button(t('Set goal!'), 'pearson_mp/nojs/animal', t('Set goal'),  'ctools-modal-ctools-sample-style');
+				$goalLink = ctools_modal_text_button(t('Set goal!'), "pearson_mp/nojs/animal/{$account->uid}/{$classNode->nid}", t('Set goal'),  'ctools-modal-ctools-sample-style');
+				$container = theme('pearson_goal_container', array('content' => $goalLink, 'nid' => $classNode->nid));
 			} else {
 				// they HAVE a goal, give change link and the value
 				$goal = $results[0]->field_pearson_goal_percent_value;
-				$nid = $results[0]->entity_id;
+				$nid = $results[0]->entity_id; // TODO: might be able to remove this
  
 				// $goalLink = l('Change goal', 'node/' . $nid . '/edit', array('attributes' => array('target' => '_blank'))) . "<span class=\"pearsonBig\">$goal%</span>";
-				$goalLink = ctools_modal_text_button(t('Change goal'), "pearson_mp/nojs/animal/{$account->uid}/{$classNode->nid}", t('Set goal'),  'ctools-modal-ctools-sample-style') . "<span class=\"pearsonBig\">$goal%</span>";								
-			}
-			
-			$view .= $goalLink . $container;
+				$goalLink = ctools_modal_text_button(t('Change goal'), "pearson_mp/nojs/animal/{$account->uid}/{$classNode->nid}", t('Set goal'),  'ctools-modal-ctools-sample-style');
+				$container = theme('pearson_goal_container', array('content' => "$goalLink <span class=\"pearsonBig\">$goal%</span>", 'nid' => $classNode->nid));
+				 								
+			}			
+			$view .= $container;
 		}
 
 		// make fieldset to hold it
@@ -2140,7 +2238,7 @@ function subPearsonCourse(){
 }
 
 function _rule_announcement($node, $update = FALSE){
-	$node = json_decode('{"type":"pearson_announcement","uid":1,"changed":1383943382,"status":1,"comment":0,"promote":0,"moderate":0,"sticky":0,"language":"und","field_pearson_ann_id":{"und":[{"value":29947550}]},"field_pearson_ann_subject":{"und":[{"value":"Extra credit opportunity! "}]},"field_pearson_ann_text":{"und":[{"value":"There is a guest speaker coming in from Microsoft, if you attend youll be able to get 5 points extra credit for a two-paragraph summary of his speech."}]},"field_pearson_ann_submitter":{"und":[{"value":"Kory Manahan"}]},"field_pearson_ann_startdisplayda":{"und":[{"value":"2011-01-19T07:00:00Z","timezone":"Pacific\/Honolulu","timezone_db":"UTC","date_type":"date"}]},"field_pearson_ann_enddisplaydate":{"und":[{"value":"2030-01-01T06:59:00Z","timezone":"Pacific\/Honolulu","timezone_db":"UTC","date_type":"date"}]},"title":"Extra credit opportunity! ","nid":"258","vid":"258","field_pearson_ann_course":{"und":[{"target_id":"227","target_type":"node"}]},"original":{"vid":"258","uid":"1","title":"Extra credit opportunity ","log":"","status":"1","comment":"0","promote":"0","sticky":"0","vuuid":"ad2b7a51-da09-43d5-961d-a2102c0e82fc","nid":"258","type":"pearson_announcement","language":"und","created":"1383942962","changed":"1383942962","tnid":"0","translate":"0","uuid":"c8e5ba90-4524-4577-acd0-663c614ecc81","revision_timestamp":"1383942962","revision_uid":"1","field_pearson_ann_enddisplaydate":{"und":[{"value":"2030-01-01T06:59:00Z","timezone":"Pacific\/Honolulu","timezone_db":"UTC","date_type":"date"}]},"field_pearson_ann_id":{"und":[{"value":"29947550","format":null,"safe_value":"29947550"}]},"field_pearson_ann_startdisplayda":{"und":[{"value":"2011-01-19T07:00:00Z","timezone":"Pacific\/Honolulu","timezone_db":"UTC","date_type":"date"}]},"field_pearson_ann_subject":{"und":[{"value":"Extra credit opportunity ","format":null,"safe_value":"Extra credit opportunity "}]},"field_pearson_ann_submitter":{"und":[{"value":"Kory Manahan","format":null,"safe_value":"Kory Manahan"}]},"field_pearson_ann_text":{"und":[{"value":"There is a guest speaker coming in from Microsoft, if you attend youll be able to get 5 points extra credit for a two-paragraph summary of his speech.","format":null,"safe_value":"There is a guest speaker coming in from Microsoft, if you attend youll be able to get 5 points extra credit for a two-paragraph summary of his speech."}]},"field_pearson_ann_course":{"und":[{"target_id":"227"}]},"rdf_mapping":{"rdftype":["sioc:Item","foaf:Document"],"title":{"predicates":["dc:title"]},"created":{"predicates":["dc:date","dc:created"],"datatype":"xsd:dateTime","callback":"date_iso8601"},"changed":{"predicates":["dc:modified"],"datatype":"xsd:dateTime","callback":"date_iso8601"},"body":{"predicates":["content:encoded"]},"uid":{"predicates":["sioc:has_creator"],"type":"rel"},"name":{"predicates":["foaf:name"]},"comment_count":{"predicates":["sioc:num_replies"],"datatype":"xsd:integer"},"last_activity":{"predicates":["sioc:last_activity_date"],"datatype":"xsd:dateTime","callback":"date_iso8601"}},"ajax_example":{"example_1":0,"example_2":""},"cid":0,"last_comment_timestamp":"1383942962","last_comment_name":"","last_comment_uid":"1","comment_count":0,"name":"mpurvis","picture":"1","data":"b:0;"},"is_new":false,"created":1383943382,"timestamp":1383943382,"uuid":"2b8165f3-a6e4-4d15-ad6f-c5bffcb2d99a","vuuid":"1dda29fb-c1ec-4477-956a-9749dd3fc21f"}');
+	// $node = json_decode('{"type":"pearson_announcement","uid":1,"changed":1383943382,"status":1,"comment":0,"promote":0,"moderate":0,"sticky":0,"language":"und","field_pearson_ann_id":{"und":[{"value":29947550}]},"field_pearson_ann_subject":{"und":[{"value":"Extra credit opportunity! "}]},"field_pearson_ann_text":{"und":[{"value":"There is a guest speaker coming in from Microsoft, if you attend youll be able to get 5 points extra credit for a two-paragraph summary of his speech."}]},"field_pearson_ann_submitter":{"und":[{"value":"Kory Manahan"}]},"field_pearson_ann_startdisplayda":{"und":[{"value":"2011-01-19T07:00:00Z","timezone":"Pacific\/Honolulu","timezone_db":"UTC","date_type":"date"}]},"field_pearson_ann_enddisplaydate":{"und":[{"value":"2030-01-01T06:59:00Z","timezone":"Pacific\/Honolulu","timezone_db":"UTC","date_type":"date"}]},"title":"Extra credit opportunity! ","nid":"258","vid":"258","field_pearson_ann_course":{"und":[{"target_id":"227","target_type":"node"}]},"original":{"vid":"258","uid":"1","title":"Extra credit opportunity ","log":"","status":"1","comment":"0","promote":"0","sticky":"0","vuuid":"ad2b7a51-da09-43d5-961d-a2102c0e82fc","nid":"258","type":"pearson_announcement","language":"und","created":"1383942962","changed":"1383942962","tnid":"0","translate":"0","uuid":"c8e5ba90-4524-4577-acd0-663c614ecc81","revision_timestamp":"1383942962","revision_uid":"1","field_pearson_ann_enddisplaydate":{"und":[{"value":"2030-01-01T06:59:00Z","timezone":"Pacific\/Honolulu","timezone_db":"UTC","date_type":"date"}]},"field_pearson_ann_id":{"und":[{"value":"29947550","format":null,"safe_value":"29947550"}]},"field_pearson_ann_startdisplayda":{"und":[{"value":"2011-01-19T07:00:00Z","timezone":"Pacific\/Honolulu","timezone_db":"UTC","date_type":"date"}]},"field_pearson_ann_subject":{"und":[{"value":"Extra credit opportunity ","format":null,"safe_value":"Extra credit opportunity "}]},"field_pearson_ann_submitter":{"und":[{"value":"Kory Manahan","format":null,"safe_value":"Kory Manahan"}]},"field_pearson_ann_text":{"und":[{"value":"There is a guest speaker coming in from Microsoft, if you attend youll be able to get 5 points extra credit for a two-paragraph summary of his speech.","format":null,"safe_value":"There is a guest speaker coming in from Microsoft, if you attend youll be able to get 5 points extra credit for a two-paragraph summary of his speech."}]},"field_pearson_ann_course":{"und":[{"target_id":"227"}]},"rdf_mapping":{"rdftype":["sioc:Item","foaf:Document"],"title":{"predicates":["dc:title"]},"created":{"predicates":["dc:date","dc:created"],"datatype":"xsd:dateTime","callback":"date_iso8601"},"changed":{"predicates":["dc:modified"],"datatype":"xsd:dateTime","callback":"date_iso8601"},"body":{"predicates":["content:encoded"]},"uid":{"predicates":["sioc:has_creator"],"type":"rel"},"name":{"predicates":["foaf:name"]},"comment_count":{"predicates":["sioc:num_replies"],"datatype":"xsd:integer"},"last_activity":{"predicates":["sioc:last_activity_date"],"datatype":"xsd:dateTime","callback":"date_iso8601"}},"ajax_example":{"example_1":0,"example_2":""},"cid":0,"last_comment_timestamp":"1383942962","last_comment_name":"","last_comment_uid":"1","comment_count":0,"name":"mpurvis","picture":"1","data":"b:0;"},"is_new":false,"created":1383943382,"timestamp":1383943382,"uuid":"2b8165f3-a6e4-4d15-ad6f-c5bffcb2d99a","vuuid":"1dda29fb-c1ec-4477-956a-9749dd3fc21f"}');
 	// dsm($node, 'node');
 	$nodeObj = node_load($node->field_pearson_ann_course->und[0]->target_id);
 	// dsm($nodeObj, 'loaded course');
