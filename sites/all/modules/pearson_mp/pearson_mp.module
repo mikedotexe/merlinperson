@@ -174,52 +174,7 @@ function pearson_mp_animal($js = NULL, $step = NULL) {
         'form id' => 'pearson_mp_start'
       ),
     ),
-  );
-
-  // We're not using any real storage here, so we're going to set our
-  // object_id to 1. When using wizard forms, id management turns
-  // out to be one of the hardest parts. Editing an object with an id
-  // is easy, but new objects don't usually have ids until somewhere
-  // in creation.
-  //
-  // We skip all this here by just using an id of 1.
-
-  // $object_id = 1;
-// 
-  // if (empty($step)) {
-    // // We reset the form when $step is NULL because that means they have
-    // // for whatever reason started over.
-    // ctools_ajax_sample_cache_clear($object_id);
-    // $step = 'start';
-  // }
-// 
-  // // This automatically gets defaults if there wasn't anything saved.
-  // $object = ctools_ajax_sample_cache_get($object_id);
-// 
-  // $animals = ctools_ajax_sample_animals();
-// 
-  // // Make sure we can't somehow accidentally go to an invalid animal.
-  // if (empty($animals[$object->type])) {
-    // $object->type = 'unknown';
-  // }
-
-  // Now that we have our object, dynamically add the animal's form.
-  // if ($object->type == 'unknown') {
-    // // If they haven't selected a type, add a form that doesn't exist yet.
-    // $form_info['order']['unknown'] = t('Configure animal');
-    // $form_info['forms']['unknown'] = array('form id' => 'nothing');
-  // }
-  // else {
-    // // Add the selected animal to the order so that it shows up properly in the trail.
-    // $form_info['order'][$object->type] = $animals[$object->type]['config title'];
-  // }
-
-  // Make sure all animals forms are represented so that the next stuff can
-  // work correctly:
-  // foreach ($animals as $id => $animal) {
-    // $form_info['forms'][$id] = array('form id' => $animals[$id]['form']);
-  // }
-// 
+  );  
 
   $form_state = array(
     'ajax' => $js,
@@ -230,8 +185,8 @@ function pearson_mp_animal($js = NULL, $step = NULL) {
   );
 
 	// mike: here we add the course and user info
-	$args = arg();
-	dsm($args, 'args');
+  $args = arg();
+  // dsm($args, 'args');
   if (count($args) == 5){
   	// we want there to be the uid and nid passed in
   	$form_state['uid'] = arg(3); 
@@ -240,16 +195,7 @@ function pearson_mp_animal($js = NULL, $step = NULL) {
   $uid = $form_state['uid'];
   $nid = $form_state['nid'];
 
-
-
-// 
-  // if ($output === FALSE || !empty($form_state['complete'])) {
-    // // This creates a string based upon the animal and its setting using
-    // // function indirection.
-    // $animal = $animals[$object->type]['output']($object);
-  // }
-  
-  
+  // dsm($form_state, 'fs');
   
   // see if there is an existing goal node for this user and course
   
@@ -262,7 +208,7 @@ function pearson_mp_animal($js = NULL, $step = NULL) {
 	->condition('c.field_pearson_goal_course_target_id', $nid);
   $results = $query->execute()->fetch();
   
-  dsm($results);  
+  // dsm($results);  
   
   if (empty($results)){
   	// NO GOAL for this person and course
@@ -276,14 +222,14 @@ function pearson_mp_animal($js = NULL, $step = NULL) {
 	$form_state['goalID'] = $results->entity_id;
   }
   
-  dsm($form_state, 'fs');
+
   
   // Send this all off to our form. This is like drupal_get_form only wizardy.
   ctools_include('wizard');
   $form = ctools_wizard_multistep_form($form_info, $step, $form_state);
   // $form['goal']['#default_value'] = 'test';
   $form['goal']['#value'] = $form_state['goalValue'];
-  dsm($form, 'form');
+  // dsm($form, 'form');
   $output = drupal_render($form);  
 
   // If $output is FALSE, there was no actual form.
@@ -300,7 +246,7 @@ function pearson_mp_animal($js = NULL, $step = NULL) {
       _save_goal($form_state['hasGoal'], $form_state['goalValue'], $form_state['values']['goal'], $form_state['goalID'], $uid, $nid);
       
 	  
-	  $goalLink = ctools_modal_text_button(t('Change goal'), "pearson_mp/nojs/animal/$uid/$uid", t('Set goal'),  'ctools-modal-ctools-sample-style');
+	  $goalLink = ctools_modal_text_button(t('Change goal'), "pearson_mp/nojs/animal/$uid/$nid", t('Set goal'),  'ctools-modal-ctools-sample-style');
       $container = theme('pearson_goal_container', array('content' => "$goalLink <span class=\"pearsonBig\">{$form_state['values']['goal']}%</span>", 'nid' => $nid));
     
       $commands[] = ajax_command_html('#pearson-goal-num' . $nid, $container);
@@ -357,12 +303,12 @@ function pearson_mp_start($form, &$form_state) {
 }
 
 function _save_goal($hasGoal, $goalValue, $newValue, $goalID, $uid, $nid){
-	dsm($hasGoal, 'hasGoal');
-	dsm($goalValue, 'goalValue');
-	dsm($newValue, 'newValue');
-	dsm($goalID, 'goalID');
-	dsm($uid, 'uid in save goal');
-	dsm($nid, 'nid in save goal');
+	// dsm($hasGoal, 'hasGoal');
+	// dsm($goalValue, 'goalValue');
+	// dsm($newValue, 'newValue');
+	// dsm($goalID, 'goalID');
+	// dsm($uid, 'uid in save goal');
+	// dsm($nid, 'nid in save goal');
 	
 	$newNode = (object) NULL;
 	$newNode->type = 'pearson_goal';
@@ -374,6 +320,7 @@ function _save_goal($hasGoal, $goalValue, $newValue, $goalID, $uid, $nid){
 	$newNode->moderate = 0;
 	$newNode->sticky = 0;
 	$newNode->language = 'und';
+	$newNode->title = "Goal: User $uid for Course $nid";
 				
 	$newNode->field_pearson_goal_course[LANGUAGE_NONE][0]['target_id'] = $nid; // add this to the entity reference for course
 	$newNode->field_pearson_goal_course[LANGUAGE_NONE][0]['target_type'] = 'node'; // required	
@@ -391,8 +338,7 @@ function _save_goal($hasGoal, $goalValue, $newValue, $goalID, $uid, $nid){
 	} else {
 		// create new Goal node
 		$newNode->created = strtotime("now");	
-		$newNode->is_new = TRUE;
-		$newNode->title = "Goal: User $uid for Course $nid";		
+		$newNode->is_new = TRUE;				
 	}
 	
 	node_save($newNode);	
@@ -1902,9 +1848,6 @@ function pearson_mp_user_view($account, $view_mode, $langcode){
 			$query->join('field_data_field_pearson_goal_course', 'c', 'n.nid = c.entity_id');
 			$query->fields('p', array('field_pearson_goal_percent_value', 'entity_id'))->condition('u.uid', $account->uid)->condition('c.field_pearson_goal_course_target_id', $classNode->nid);
 			$results = $query->execute()->fetchAll();
-			
-			
-			
 						
 			  ctools_include('ajax');
 			  ctools_include('modal');
