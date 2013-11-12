@@ -1920,11 +1920,11 @@ function pearson_mp_user_view($account, $view_mode, $langcode){
 			// '#title'=>'<h3>' . $classNode->title . '</h3>',
 			'#title'=>$classNode->title,
 			'#collapsible'=>true,
-			'#collapsed'=>true,
+			'#collapsed'=>false,
 			'#weight' => 100,
 			  '#attributes' => array (
 			    'class' => array(
-			      'collapsible', 'collapsed'
+			      // 'collapsible', 'collapsed'
 			    )
 			  )			
 		);	
