@@ -58,6 +58,30 @@ function example_page() {
  
   return $build;
 }
+/*
+ * Hook theme, used for the Ajax modal
+ * ctools_ajax_sample_container --> pearson_goal_container
+ */  
+function pearson_mp_theme() {
+  return array(
+    // Sample theme functions.
+    'pearson_goal_container' => array(
+      'arguments' => array('content' => NULL),
+    ),
+  );
+}
+
+/**
+ * Theme function for main rendered output.
+ */
+function theme_pearson_goal_container($vars) {
+  // TODO: need to add a unique number to the end of it, so two classes don't get updated simultaneously
+  $output = '<div id="pearson-goal-num">';
+  $output .= $vars['content'];
+  $output .= '</div>';
+
+  return $output;
+}
 
 function _syllabus_page(){
 	$form = array();
@@ -76,12 +100,229 @@ function _syllabus_page(){
 	 '#markup' => $syllabusHTML,
 	);
 	
+	
+	  // ctools_include('ajax');
+	  // ctools_include('modal');
+// 	
+	  // // Add CTools' javascript to the page.
+	  // ctools_modal_add_js();	
+	  // // Create our own javascript that will be used to theme a modal.
+	  // $sample_style = array(
+	    // 'ctools-sample-style' => array(
+	      // 'modalSize' => array(
+	        // 'type' => 'fixed',
+	        // 'width' => 500,
+	        // 'height' => 300,
+	        // 'addWidth' => 20,
+	        // 'addHeight' => 15,
+	      // ),
+	      // 'modalOptions' => array(
+	        // 'opacity' => .5,
+	        // 'background-color' => '#000',
+	      // ),
+	      // 'animation' => 'fadeIn',
+	      // 'modalTheme' => 'CToolsSampleModal',
+	      // 'throbber' => theme('image', array('path' => ctools_image_path('ajax-loader.gif', 'ctools_ajax_sample'), 'alt' => t('Loading...'), 'title' => t('Loading'))),
+	    // ),
+	  // );
+// 	
+	  // drupal_add_js($sample_style, 'setting');	
+// 	  
+	  // ctools_add_js('ctools-ajax-sample', 'ctools_ajax_sample');
+	  // ctools_add_css('ctools-ajax-sample', 'ctools_ajax_sample');	  
+// 	
+		// $textButton = ctools_modal_text_button(t('Wizard (custom modal)'), 'pearson_mp/nojs/animal', t('Pick an animal'),  'ctools-modal-ctools-sample-style');
+		// $form['aja1'] = array(
+		 // '#type' => 'markup',
+		 // '#markup' => $textButton,
+		// );
+// 		
+		// $container = theme('pearson_goal_container', array('content' => '<h1>' . t('Sample Content') . '</h1>'));						
+		// $form['ajaContainer'] = array(
+		 // '#type' => 'markup',
+		 // '#markup' => $container,
+		// );				
+		
+	
 	return $form;
+}
+
+function pearson_mp_animal($js = NULL, $step = NULL) {
+  if ($js) {
+    ctools_include('modal');
+    ctools_include('ajax');
+  }
+
+  $form_info = array(
+    'id' => 'animals',
+    'path' => "pearson_mp/" . ($js ? 'ajax' : 'nojs') . "/animal/%step",
+    'show trail' => FALSE,
+    'show back' => FALSE,
+    'show cancel' => TRUE,
+    'show return' => FALSE,
+    'finish callback' => 'pearson_mp_wizard_finish',
+    'cancel callback' => 'pearson_mp_wizard_cancel',
+   // this controls order, as well as form labels
+    'order' => array(
+      'start' => t('Pick goal (percentage)'),
+    ),
+   // here we map a step to a form id.
+    'forms' => array(
+      // e.g. this for the step at wombat/create
+      'start' => array(
+        'form id' => 'pearson_mp_start'
+      ),
+    ),
+  );
+
+  // We're not using any real storage here, so we're going to set our
+  // object_id to 1. When using wizard forms, id management turns
+  // out to be one of the hardest parts. Editing an object with an id
+  // is easy, but new objects don't usually have ids until somewhere
+  // in creation.
+  //
+  // We skip all this here by just using an id of 1.
+
+  // $object_id = 1;
+// 
+  // if (empty($step)) {
+    // // We reset the form when $step is NULL because that means they have
+    // // for whatever reason started over.
+    // ctools_ajax_sample_cache_clear($object_id);
+    // $step = 'start';
+  // }
+// 
+  // // This automatically gets defaults if there wasn't anything saved.
+  // $object = ctools_ajax_sample_cache_get($object_id);
+// 
+  // $animals = ctools_ajax_sample_animals();
+// 
+  // // Make sure we can't somehow accidentally go to an invalid animal.
+  // if (empty($animals[$object->type])) {
+    // $object->type = 'unknown';
+  // }
+
+  // Now that we have our object, dynamically add the animal's form.
+  // if ($object->type == 'unknown') {
+    // // If they haven't selected a type, add a form that doesn't exist yet.
+    // $form_info['order']['unknown'] = t('Configure animal');
+    // $form_info['forms']['unknown'] = array('form id' => 'nothing');
+  // }
+  // else {
+    // // Add the selected animal to the order so that it shows up properly in the trail.
+    // $form_info['order'][$object->type] = $animals[$object->type]['config title'];
+  // }
+
+  // Make sure all animals forms are represented so that the next stuff can
+  // work correctly:
+  // foreach ($animals as $id => $animal) {
+    // $form_info['forms'][$id] = array('form id' => $animals[$id]['form']);
+  // }
+// 
+
+	// mike: here we add the course and user info
+  $form_state = array(
+    'ajax' => $js,
+    // Put our object and ID into the form state cache so we can easily find
+    // it.
+    'object_id' => $object_id,
+    'object' => &$object,
+    'uid' => arg(3),
+    'nid' => arg(4),
+  );
+
+  // Send this all off to our form. This is like drupal_get_form only wizardy.
+  ctools_include('wizard');
+  $form = ctools_wizard_multistep_form($form_info, $step, $form_state);
+  $output = drupal_render($form);
+// 
+  // if ($output === FALSE || !empty($form_state['complete'])) {
+    // // This creates a string based upon the animal and its setting using
+    // // function indirection.
+    // $animal = $animals[$object->type]['output']($object);
+  // }
+  
+  dsm($form_state, 'fs');
+
+  // If $output is FALSE, there was no actual form.
+  
+  if ($js) {
+  	// dsm($js. 'js');
+    // If javascript is active, we have to use a render array.
+    $commands = array();
+    if ($output === FALSE || !empty($form_state['complete'])) {
+    	// dsm('first');
+      // Dismiss the modal.
+      $commands[] = ajax_command_html('#pearson-goal-num', $form_state['values']['goal']);
+      $commands[] = ctools_modal_command_dismiss();
+    }
+    else if (!empty($form_state['cancel'])) {
+    	// dsm('second');
+      // If cancelling, return to the activity.
+      $commands[] = ctools_modal_command_dismiss();
+    }
+    else {
+    	// dsm('third');
+      $commands = ctools_modal_form_render($form_state, $output);
+    }
+    print ajax_render($commands);
+    exit;
+  }
+  else {
+    if ($output === FALSE || !empty($form_state['complete'])) {
+      return $animal;
+    }
+    else if (!empty($form_state['cancel'])) {
+      drupal_goto('');
+    }
+    else {
+      return $output;
+    }
+  }
+}
+
+function pearson_mp_wizard_finish(&$form_state) {
+  $form_state['complete'] = TRUE;
+}
+
+function pearson_mp_wizard_cancel(&$form_state) {
+  $form_state['cancel'] = TRUE;
+}
+
+/**
+ * Wizard start form. Choose an animal.
+ */
+function pearson_mp_start($form, &$form_state) {
+  $form_state['title'] = t('Set goal');
+
+  // $animals = ctools_ajax_sample_animals();
+  // foreach ($animals as $id => $animal) {
+    // $options[$id] = $animal['title'];
+  // }
+
+  
+	$form['goal'] = array(
+	  '#type' => 'textfield',
+	  '#title' => t('Goal'),
+	  '#size' => 10,
+	  '#maxlength' => 4,
+	  '#required' => TRUE,
+	);  
+
+  return $form;
 }
 
 // hook_menu
 function pearson_mp_menu(){
 	$items = array();
+  $items['pearson_mp/%ctools_js/animal/%/%'] = array(
+      'title' => 'Animal',
+      'page callback' => 'pearson_mp_animal',
+      'page arguments' => array(1),
+      'access callback' => TRUE,
+      'type' => MENU_CALLBACK,
+  );	
+	
   $items['example-charts'] = array(
     'title' => 'Example',
     'page callback' => 'example_page',
@@ -1552,9 +1793,11 @@ function pearson_mp_user_view($account, $view_mode, $langcode){
 			$view .= '<h3>No Announcements</h3>';
 		}
 		
+		// add ajax link to create goal
+		
+		
 		// add link to create goal
 		if ($isStudent){
-			$view .= '<h3>Goal</h3>';
 			// see if they have a goal node attached to them
 			$query = db_select('users', 'u');
 			$query->join('field_data_field_pearson_goal_user', 'x', 'u.uid = x.field_pearson_goal_user_target_id');
@@ -1564,20 +1807,70 @@ function pearson_mp_user_view($account, $view_mode, $langcode){
 			$query->fields('p', array('field_pearson_goal_percent_value', 'entity_id'))->condition('u.uid', $account->uid)->condition('c.field_pearson_goal_course_target_id', $classNode->nid);
 			$results = $query->execute()->fetchAll();
 			
+			
+			
+						
+			  ctools_include('ajax');
+			  ctools_include('modal');
+			
+			  // Add CTools' javascript to the page.
+			  ctools_modal_add_js();	
+			  // Create our own javascript that will be used to theme a modal.
+			  $sample_style = array(
+			    'ctools-sample-style' => array(
+			      'modalSize' => array(
+			        'type' => 'fixed',
+			        'width' => 500,
+			        'height' => 300,
+			        'addWidth' => 20,
+			        'addHeight' => 15,
+			      ),
+			      'modalOptions' => array(
+			        'opacity' => .5,
+			        'background-color' => '#000',
+			      ),
+			      'animation' => 'fadeIn',
+			      'modalTheme' => 'CToolsSampleModal',
+			      'throbber' => theme('image', array('path' => ctools_image_path('ajax-loader.gif', 'ctools_ajax_sample'), 'alt' => t('Loading...'), 'title' => t('Loading'))),
+			    ),
+			  );
+			
+			  drupal_add_js($sample_style, 'setting');	
+			  
+			  ctools_add_js('ctools-ajax-sample', 'ctools_ajax_sample');
+			  ctools_add_css('ctools-ajax-sample', 'ctools_ajax_sample');	  
+			
+				// $textButton = ctools_modal_text_button(t('Wizard (custom modal)'), 'pearson_mp/nojs/animal', t('Pick an animal'),  'ctools-modal-ctools-sample-style');
+				// $form['aja1'] = array(
+				 // '#type' => 'markup',
+				 // '#markup' => $textButton,
+				// );
+				
+				$container = theme('pearson_goal_container', array('content' => '<h1>' . t('Sample Content') . '</h1>'));						
+				// $form['ajaContainer'] = array(
+				 // '#type' => 'markup',
+				 // '#markup' => $container,
+				// );					
+			
+			$view .= '<h3>Goal</h3>';
+
+			
 			$goal = '';
 			$goalLink = '';
 			if (empty($results)){
-				// they have not set a goal, give link to set goal
-				$goalLink = l('Set goal!', 'node/add/pearson-goal', array('query' => array('goal_user' => $account->uid, 'goal_course' => $classNode->nid), 'attributes' => array('target' => '_blank')));
+				// they HAVE NO goal, give link to set goal
+				// $goalLink = l('Set goal!', 'node/add/pearson-goal', array('query' => array('goal_user' => $account->uid, 'goal_course' => $classNode->nid), 'attributes' => array('target' => '_blank')));
+				$goalLink = ctools_modal_text_button(t('Set goal!'), 'pearson_mp/nojs/animal', t('Set goal'),  'ctools-modal-ctools-sample-style');
 			} else {
-				// they have a goal, give change link and the value
+				// they HAVE a goal, give change link and the value
 				$goal = $results[0]->field_pearson_goal_percent_value;
 				$nid = $results[0]->entity_id;
  
-				$goalLink = l('Change goal', 'node/' . $nid . '/edit', array('attributes' => array('target' => '_blank'))) . "<span class=\"pearsonBig\">$goal%</span>";				
+				// $goalLink = l('Change goal', 'node/' . $nid . '/edit', array('attributes' => array('target' => '_blank'))) . "<span class=\"pearsonBig\">$goal%</span>";
+				$goalLink = ctools_modal_text_button(t('Change goal'), "pearson_mp/nojs/animal/{$account->uid}/{$classNode->nid}", t('Set goal'),  'ctools-modal-ctools-sample-style') . "<span class=\"pearsonBig\">$goal%</span>";								
 			}
 			
-			$view .= $goalLink;
+			$view .= $goalLink . $container;
 		}
 
 		// make fieldset to hold it
