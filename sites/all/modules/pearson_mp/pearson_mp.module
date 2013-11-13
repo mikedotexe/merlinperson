@@ -621,6 +621,7 @@ function pearson_mp_cron(){
 	}
 	// watchdog('pearson_mp_debug', 'Calling checkC');
 	checkAnnouncements();
+	// checkIQT();
 }
 
 /*
@@ -664,6 +665,88 @@ function checkAnnouncements($IDarray = array()){
 		}
 	}
 } 
+
+function checkIQT(){
+	// $queueIQT = DrupalQueue::get("pearsonIQT");
+	// find all the people who have entered phone numbers into their account	
+	// find all the courses they're enrolled in
+	$q = db_select('field_data_field_pearson_user_phone', 'p');
+	$q->join('field_data_field_pearson_course_users', 'c', 'p.entity_id = c.field_pearson_course_users_target_id'); // joined on uid
+	$q->join('field_data_field_pearson_user_id', 'u', 'p.entity_id = u.entity_id'); // joined on uid
+	$q->join('field_data_field_pearson_course_number', 'n', 'c.entity_id = n.entity_id'); // joined on course id
+	$q->fields('n', array('field_pearson_course_number_value'))
+		->fields('u', array('field_pearson_user_id_value'))
+		->fields('c', array('entity_id'))
+		->condition('p.field_pearson_user_phone_value', '', '!=');
+	$r = $q->execute()->fetchAll();
+	dsm($r, 'results');
+	
+	$IQTs = array(); // this will be filled with objects that will be turend into nodes
+	
+	// now we have the Pearson UserID and Pearson CourseID, which is needed for the full IQT object
+	foreach ($r as $k => $v){ // looping through courses
+		// look for all upcoming items for this courses
+		$uid = $v->field_pearson_user_id_value;
+		$cid = $v->field_pearson_course_number_value;
+		$nid = $v->entity_id;
+		$upcoming = remoteOAuth1("/users/$uid/courses/$cid/upcomingevents");
+		dsm($upcoming, 'upcoming');
+		
+		foreach ($upcoming->upcomingEvents as $key => $value) {
+			dsm($value, 'value');
+			if ($value->type != 'IQT' || $value->category != 'start') continue; // we only care about Quizzes (IQT), and we only want when it starts (not ends)
+			
+			// look for all IQT's and build array of objects
+			$time = $value->when->time;
+			// dsm($time, '$time');
+			// dsm($upcoming, '$upcoming');
+			$itemID = $value->id;
+			$titleHeading = $value->titleHeading;
+			$title = $value->title;
+			
+			$gradebookItem = remoteOAuth1("/courses/$cid/items/$itemID/gradebookItem");
+			// dsm($gradebookItem, '$gradebookItem');
+			$href = $gradebookItem->gradebookItem->links[0]->href;
+			$pos = strrpos($href, '/');
+			$guid = substr($href, $pos + 1);
+			
+			// dsm($guid, '$guid');
+			$gradeDetailsItem = remoteOAuth1("/courses/$cid/gradebookItems/$guid");
+			// dsm($gradeDetailsItem, '$gradeDetailsItem');
+			$points = $gradeDetailsItem->gradebookItems[0]->pointsPossible;
+			// dsm($points, '$points');		
+			
+			// make the object and add to array
+			$newNode = (object) NULL;
+			$newNode->title = $title;
+			$newNode->type = 'pearson_iqt';
+			$newNode->uid = 1;
+			$newNode->changed = strtotime("now");
+			$newNode->status = 1;
+			$newNode->comment = 0;
+			$newNode->promote = 0;
+			$newNode->moderate = 0;
+			$newNode->sticky = 0;
+			$newNode->language = 'und';
+		
+			$newNode->field_pearson_iqt_titleheading[LANGUAGE_NONE][0]['value'] = $titleHeading;
+			$newNode->field_pearson_iqt_time[LANGUAGE_NONE][0]['value'] = $time;
+			$newNode->field_pearson_iqt_guid[LANGUAGE_NONE][0]['value'] = $guid;
+			$newNode->field_pearson_iqt_pointspossible[LANGUAGE_NONE][0]['value'] = $points;			
+									
+			$newNode->field_pearson_iqt_course[LANGUAGE_NONE][0]['target_id'] = $nid; // add this to the entity reference for course
+			$newNode->field_pearson_iqt_course[LANGUAGE_NONE][0]['target_type'] = 'node'; // required				
+			$IQTs[] = $newNode;
+		}
+		dsm($IQTs, 'Array of new node objects to create');		
+		
+			
+	}	
+	
+	
+	
+	
+}
 
 /*
  * This handles the queue that looks to update/add announcements
@@ -1245,6 +1328,7 @@ function _profile_submit(&$form, &$form_state){
 	$isBroken = FALSE;
 	if (!is_numeric($phone)) $isBroken = TRUE;
 	if (strlen($phone) != 10) $isBroken = TRUE;
+	if (empty($phone)) $isBroken = FALSE; // otherwise it's essentially a required field.
 	
 	if ($isBroken){
 		form_set_error('field_pearson_user_phone', 'Please enter a valid 10-digit phone number like 8085551234');
