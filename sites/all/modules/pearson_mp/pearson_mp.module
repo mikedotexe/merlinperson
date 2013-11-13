@@ -2092,7 +2092,7 @@ function _ajax_grade($js = NULL, $uid, $cid) {
 	$header[] = array("data" => "Category");
 	$header[] = array("data" => "Grade");
 	
-	$rows[] = array("Average", $gradeObj->courseGradeToDate->average); 
+	$rows[] = array("Average", $gradeObj->courseGradeToDate->average . '%'); 
 	$rows[] = array("Earned", $gradeObj->courseGradeToDate->earned); 
 	$rows[] = array("Possible", $gradeObj->courseGradeToDate->possible); 
 	$rows[] = array("Extra Credit", $gradeObj->courseGradeToDate->extraCredit); 
