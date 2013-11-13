@@ -98,51 +98,7 @@ function _syllabus_page(){
 	$form['ht'] = array(
 	 '#type' => 'markup',
 	 '#markup' => $syllabusHTML,
-	);
-	
-	
-	  // ctools_include('ajax');
-	  // ctools_include('modal');
-// 	
-	  // // Add CTools' javascript to the page.
-	  // ctools_modal_add_js();	
-	  // // Create our own javascript that will be used to theme a modal.
-	  // $sample_style = array(
-	    // 'ctools-sample-style' => array(
-	      // 'modalSize' => array(
-	        // 'type' => 'fixed',
-	        // 'width' => 500,
-	        // 'height' => 300,
-	        // 'addWidth' => 20,
-	        // 'addHeight' => 15,
-	      // ),
-	      // 'modalOptions' => array(
-	        // 'opacity' => .5,
-	        // 'background-color' => '#000',
-	      // ),
-	      // 'animation' => 'fadeIn',
-	      // 'modalTheme' => 'CToolsSampleModal',
-	      // 'throbber' => theme('image', array('path' => ctools_image_path('ajax-loader.gif', 'ctools_ajax_sample'), 'alt' => t('Loading...'), 'title' => t('Loading'))),
-	    // ),
-	  // );
-// 	
-	  // drupal_add_js($sample_style, 'setting');	
-// 	  
-	  // ctools_add_js('ctools-ajax-sample', 'ctools_ajax_sample');
-	  // ctools_add_css('ctools-ajax-sample', 'ctools_ajax_sample');	  
-// 	
-		// $textButton = ctools_modal_text_button(t('Wizard (custom modal)'), 'pearson_mp/nojs/animal', t('Pick an animal'),  'ctools-modal-ctools-sample-style');
-		// $form['aja1'] = array(
-		 // '#type' => 'markup',
-		 // '#markup' => $textButton,
-		// );
-// 		
-		// $container = theme('pearson_goal_container', array('content' => '<h1>' . t('Sample Content') . '</h1>'));						
-		// $form['ajaContainer'] = array(
-		 // '#type' => 'markup',
-		 // '#markup' => $container,
-		// );				
-		
+	);	
 	
 	return $form;
 }
@@ -1353,116 +1309,6 @@ function _decryptFromUID($uid, $role){
 }
  */
 
-// code to create a course node programmatically
-/* 
-
-$newNode = (object) NULL;
-$newNode->type = 'pearson_course';
-$newNode->uid = 1;
-$newNode->created = strtotime("now");
-$newNode->changed = strtotime("now");
-$newNode->status = 1;
-$newNode->comment = 0;
-$newNode->promote = 0;
-$newNode->moderate = 0;
-$newNode->sticky = 0;
-$newNode->language = 'und';
-$newNode->title = "test";
-$newNode->field_pearson_course_number[LANGUAGE_NONE][0]['value'] = "this###";
-node_save($newNode);
- 
- */
-//----------------------------------
-/*
-	$ret = array();
-	// get list of professor id's that are tagged with "include me in cron"
-	//		prof => id
-	$query = db_select('node', 'n');
-	$query->join('field_data_field_pearson_include_cron', 'b', 'n.nid = b.entity_id');
-$query->leftJoin('field_data_field_pearson_prof_courses', 'c', 'n.nid = c.entity_id');
-	$query
-	  ->fields('n', array('nid', 'title'))
-->fields('c', array('field_pearson_prof_courses_value'))
-	  ->condition('n.type', 'pearson_prof')
-	  ->condition('n.status', '1')
-	->condition('b.field_pearson_include_cron_value', 1);
-	$result = $query->execute()->fetchAll();
-	foreach ($result as $key => $value) {
-		$ret['prof'][] = $value->title;
-	}
-	dsm($result, 'result');		
-	dsm($ret, 'return value');
- */
-//---------------------------------------------------
-// curl stuff
-
-/*
- commented out because we'll use assertion, and we dont have the field_pearson_prof fields anymore
-function remoteOAuth2Tokens($uid = NULL, $u = NULL, $p = NULL){
-
-	// in this case we have the uid and the email of the professor
-	// let's get the token based on his/her username and password
-	$ret = array();
-	// get list of professor id's that are tagged with "include me in cron"
-	//		prof => id
-	$query = db_select('users', 'u');
-	$query->join('field_data_field_pearson_prof_username', 'n', 'u.uid = n.entity_id');
-	$query->join('field_data_field_pearson_prof_password', 'p', 'u.uid = p.entity_id');
-	$query
-	  ->fields('n', array('field_pearson_prof_username_value'))
-	  ->fields('p', array('field_pearson_prof_password_value'))
-	  ->condition('u.uid', $uid);
-	$result = $query->execute()->fetchAll();
-	// returns a result like this for username: $result[0]->field_pearson_prof_username_value
-	
-	// if (isset($result[0]->field_pearson_prof_username_value) && isset($result[0]->field_pearson_prof_password_value)){
-		// both of them are set, let's request that token from Pearson LearningStudio
-		$application_id = variable_get('pearson_app_id'); // this must be set by the client, stored as a Drupal variable using variable_set() API call
-		$client_string = variable_get('pearson_client_string');
-		// if there are arguments for these sent in, then use them 
-		$username = (isset($u)) ? $u : $result[0]->field_pearson_prof_username_value; 
-		$password = isset($p) ? $p : $result[0]->field_pearson_prof_password_value;
-		
-		$post_request = 'grant_type=password'
-						.'&client_id='.$application_id
-			   			.'&username='.$client_string.'\\'.$username
-			   			.'&password='.$password; 
-
-		$ch = curl_init();
-		curl_setopt($ch, CURLOPT_URL, 'https://m-api.ecollege.com/token');
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-		curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
-		curl_setopt($ch, CURLOPT_POSTFIELDS, $post_request);
-		 
-		// TODO: remove below, only for competition sprint 
-		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-		 
-		$api_response = curl_exec($ch); 		 
-		$curlError = curl_error($ch);		 
-		$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-		 
-		if($curlError){
-			watchdog('pearson_mp', $curlError . ' - cURL problem');			 		
-			//dsm($curlError, "There was a problem making the API Call. cURL problem"); 		 
-		} else if (intval($http_code / 100) >= 4){		 
-			$decoded = json_decode($api_response); 
-			$msg = (is_object($decoded) && isset($decoded->error->message)) ? $decoded->error->message : "No message"; 
-			$msg .= " Error ID: "; 
-			$msg .= (is_object($decoded) && isset($decoded->error->errorId) && !empty($decoded->error->errorId)) ? $decoded->error->errorId : 'None provided';  
-			watchdog('pearson_mp', $http_code . " - The API Server responded with http_code");
-			// dsm($http_code, "The API Server responded with http_code");
-			// dsm($msg, "Message"); 		 
-		} else {
-			// all systems go, we soon have refresh_token, access_token, and expires_in		 
-			$decoded_response = json_decode($api_response); 
-			return $decoded_response;
-			// $decoded_response->access_token is what's really useful here
-			//$course_info = getCourseInformation($decoded_response->access_token);
-		}			
-	// }
-}
-*/
-
 function remoteOAuth2POSTFile($access){
 	// set up header
 	$body = 
@@ -1961,19 +1807,7 @@ function pearson_mp_user_view($account, $view_mode, $langcode){
 			  drupal_add_js($sample_style, 'setting');	
 			  
 			  ctools_add_js('ctools-ajax-sample', 'ctools_ajax_sample');
-			  ctools_add_css('ctools-ajax-sample', 'ctools_ajax_sample');	  
-			
-				// $textButton = ctools_modal_text_button(t('Wizard (custom modal)'), 'pearson_mp/nojs/animal', t('Pick an animal'),  'ctools-modal-ctools-sample-style');
-				// $form['aja1'] = array(
-				 // '#type' => 'markup',
-				 // '#markup' => $textButton,
-				// );
-				
-										
-				// $form['ajaContainer'] = array(
-				 // '#type' => 'markup',
-				 // '#markup' => $container,
-				// );					
+			  ctools_add_css('ctools-ajax-sample', 'ctools_ajax_sample');							
 			
 			$view .= '<h3>Goal</h3>';
 
@@ -2040,48 +1874,14 @@ function pearson_mp_user_view($account, $view_mode, $langcode){
 			 '#markup' => $output,
 			);					
 		}
-		
-		// make table
-		// $table = array_diff($origAccount, $account->content);
-
 	} 
-	
-		// $userID = $_GET['UserID'];
-	// $userName = $_GET['UserName'];
-	// $courseID = $_GET['CourseID'];
-	
-
-	
-	// dsm($account, 'account');
-	// dsm($view_mode, 'view mode');	
 }
 
 function _ajax_grade($js = NULL, $uid, $cid) {
   // dsm($js, 'js');
   // dsm($uid, 'uid');
   // dsm($cid, 'cid');
-  // dsm($arg, 'arg');
-  
-
-	// $Average = array("Average", "data"); 
-	// $Earned = array("Earned", "data"); 
-	// $Possible = array("Possible", "data"); 
-	// $XC = array("Extra Credit", "data"); 
-	// $LC = array("Letter Grade", "data"); 
-	// $Comments = array("Comments", "data");
-	 
-	// $row[] = "Data1";
-	// $rows[] = $row;
-	// $row[] = "Row Column 3 Data"; 
-	// $row[] = "Row Column 4 Data";
-// 	
-	// $rows = array();
-	// $rows[] = $row;
-	
-	// $account->content['course' . $pearsonCID]['debug'] = array(
-	 // '#type' => 'markup',
-	 // '#markup' => $html,
-	// );	  
+  // dsm($arg, 'arg');	  
   
   $gradeObj = $a = remoteOAuth1("/users/$uid/courses/$cid/coursegradetodate");
   $items = array();
@@ -2098,14 +1898,7 @@ function _ajax_grade($js = NULL, $uid, $cid) {
 	$rows[] = array("Extra Credit", $gradeObj->courseGradeToDate->extraCredit); 
 	$rows[] = array("Letter Grade", $gradeObj->courseGradeToDate->letterGrade->letterGrade); 
 	$rows[] = array("Comments", $gradeObj->courseGradeToDate->letterGrade->comments);  	
-	$html = theme('table', array('header' => $header, 'rows' => $rows));
-	  // $items['Average'] = $gradeObj->courseGradeToDate->average;
-	  // $items['Earned'] = $gradeObj->courseGradeToDate->earned;
-	  // $items['Possible'] = $gradeObj->courseGradeToDate->possible;
-	  // $items['Extra Credit'] = $gradeObj->courseGradeToDate->extraCredit;
-	  // $items['Letter Grade'] = $gradeObj->courseGradeToDate->letterGrade->letterGrade;
-	  // $items['Comments'] = $gradeObj->courseGradeToDate->letterGrade->comments;
-        	
+	$html = theme('table', array('header' => $header, 'rows' => $rows));        	
   } else {
   	$items['Sorry'] = 'The grades are not available to you.';
   }
@@ -2161,17 +1954,6 @@ function classesByUID($uid){
 	$results = $query->execute()->fetchAll();
 	return $results;
 }
-/*
-	$findCourseID = $item->id;
-	$query = db_select('node', 'n');
-	$query->join('field_data_field_pearson_course_number', 'b', 'n.nid = b.entity_id');
-	$query
-	  ->fields('n', array('nid', 'vid'))
-	  ->condition('n.type', 'pearson_course')
-	  ->condition('b.field_pearson_course_number_value', $findCourseID);
-	$result = $query->execute()->fetchAll();
-	*/	
-
 
 function subPearsonCourse(){
 	$prin = variable_get('pearson_principal');
