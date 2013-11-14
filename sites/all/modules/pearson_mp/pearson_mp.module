@@ -2148,7 +2148,13 @@ function _rule_announcement($node, $update = FALSE){
  * $node is node deleted by Rules
  */
 function _remove_hash($type, $node){
-	$pid = $node->field_pearson_ann_id[LANGUAGE_NONE][0]['value'];
+	if ($type == 'ann')
+		$pid = $node->field_pearson_ann_id[LANGUAGE_NONE][0]['value'];
+	else if ($type == 'course')
+		$pid = $node->field_pearson_course_id[LANGUAGE_NONE][0]['value'];
+	else if ($type == 'iqt')
+		$pid = $node->field_pearson_iqt_guid[LANGUAGE_NONE][0]['value'];  
+		
 	db_delete('pearson_mp_hashes')
 	  ->condition('type', $type)
 	  ->condition('description', $pid)
