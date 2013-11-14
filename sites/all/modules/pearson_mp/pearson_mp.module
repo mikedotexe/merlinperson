@@ -622,7 +622,7 @@ function checkAnnouncements($IDarray = array()){
 	}
 } 
 
-function checkIQT(){
+function checkIQT($uidForce = FALSE){
 	// $queueIQT = DrupalQueue::get("pearsonIQT");
 	// find all the people who have entered phone numbers into their account	
 	// find all the courses they're enrolled in
@@ -694,12 +694,19 @@ function checkIQT(){
 			$newNode->field_pearson_iqt_course[LANGUAGE_NONE][0]['target_type'] = 'node'; // required				
 			$IQTs[] = $newNode;
 		}
-		dsm($IQTs, 'Array of new node objects to create');		
-		
-			
 	}	
+	dsm($IQTs, 'Array of new node objects to create');		
+	// loop through and create nodes
 	
+	foreach ($IQTs as $newNode) {
+		// TODO: check to see if it exists, whether to update or create new
+		node_save($newNode);
+	}
 	
+	if ($uidForce){
+		// we want to change any existing hashes in the database involving IQTs attached to this user
+		// see if there are any hashes
+	}
 	
 	
 }
