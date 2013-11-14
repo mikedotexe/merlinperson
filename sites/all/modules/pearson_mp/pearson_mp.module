@@ -694,7 +694,7 @@ function checkIQT($uidForce = FALSE){
 			$IQTs[] = $newNode;
 		}
 	}	
-	dsm($IQTs, 'Array of new node objects to create');		
+	// dsm($IQTs, 'Array of new node objects to create');		
 	// loop through and create nodes
 	
 	foreach ($IQTs as $newNode) {
@@ -704,19 +704,19 @@ function checkIQT($uidForce = FALSE){
 		$q = db_select('field_data_field_pearson_iqt_guid', 'g');
 		$q->fields('g', array('entity_id'))->condition('g.field_pearson_iqt_guid_value', $guid);
 		$r = $q->execute()->fetch();
-		dsm($r, 'r');
+		// dsm($r, 'r');
 		// go ahead and compute the hash right now so we can use it in if blocks below
 				
-		dsm($newNode, 'newnode');
+		// dsm($newNode, 'newnode');
 		
 		$serObj = serialize($newNode);
 		$computedHash = hash("crc32b", $serObj);
-		dsm($computedHash, 'computedhash');
+		// dsm($computedHash, 'computedhash');
 		// this has to be added in after the hash is computed or else it will always change the hash		
 		$newNode->changed = strtotime("now");		
 		
 		if (empty($r)){
-			dsm('one');
+			// dsm('one');
 			// we are creating a new IQT node
 			$newNode->created = strtotime("now");	
 			$newNode->is_new = TRUE;
@@ -727,13 +727,13 @@ function checkIQT($uidForce = FALSE){
 			_add_hash('iqt', $guid, $computedHash, $newNode);	
 		} else {
 			// lets see if there is a hashed value
-			dsm($guid, 'guid value');
+			// dsm($guid, 'guid value');
 			$q2 = db_select('pearson_mp_hashes', 'p');
 			$q2->fields('p', array('hash'))->condition('p.type', 'iqt')->condition('p.description', $guid);
 			$r2 = $q2->execute()->fetch();
-			dsm($r2, 'r2');
+			// dsm($r2, 'r2');
 			if (empty($r2)){
-				dsm('two');
+				// dsm('two');
 				// no hash stored in the database
 				$newNode->nid = $r->entity_id;
 				$newNode->vid = $r->entity_id; // will throw notice without this line					
@@ -743,7 +743,7 @@ function checkIQT($uidForce = FALSE){
 				// there is a hash, compare it with the current object we're about to save
 				$storedHash = $r2->hash;
 				if ($computedHash != $storedHash){ // hashes differ
-					dsm('three');
+					// dsm('three');
 					// we are updating this IQT node
 					$newNode->nid = $r->entity_id;
 					$newNode->vid = $r->entity_id; // will throw notice without this line					
