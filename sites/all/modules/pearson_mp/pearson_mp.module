@@ -623,6 +623,29 @@ function checkAnnouncements($IDarray = array()){
 } 
 
 function checkIQT($uidForce = FALSE){
+	if ($uidForce){
+		// we want to remove existing IQT hashes in the database involving IQTs attached to this user
+		// see if there are any hashes
+		// dsm($uidForce, 'uidforce');
+		
+		$q0 = db_select('field_data_field_pearson_course_users', 'u');
+		$q0->join('field_data_field_pearson_iqt_course', 'c', 'u.entity_id = c.field_pearson_iqt_course_target_id'); // joined on uid
+		$q0->join('field_data_field_pearson_iqt_guid', 'g', 'c.entity_id = g.entity_id'); // joined on uid
+		$q0->fields('g', array('field_pearson_iqt_guid_value'))
+			->condition('u.field_pearson_course_users_target_id', $uidForce);
+		$r0 = $q0->execute()->fetchAll();		
+		// now we have th GUIDs we want to remove fromt he hash table, so do it
+		foreach ($r0 as $guidInside) {
+			// dsm($guidInside, 'guidInside');
+			$fakeNode = (object) NULL;
+			$fakeNode->field_pearson_iqt_guid[LANGUAGE_NONE][0]['value'] = $guidInside->field_pearson_iqt_guid_value;
+			// dsm($fakeNode, 'fn');
+			_remove_hash('iqt', $fakeNode);	
+		}
+		 
+		// dsm($r0, 'r0');
+	}		
+	
 	// $queueIQT = DrupalQueue::get("pearsonIQT");
 	// find all the people who have entered phone numbers into their account	
 	// find all the courses they're enrolled in
@@ -753,15 +776,7 @@ function checkIQT($uidForce = FALSE){
 			}
 		}
 		
-	}
-	
-	// TODO: make it so when they change their phone number in the user profile, we tweak the hashes deliberately
-	if ($uidForce){
-		// we want to change any existing hashes in the database involving IQTs attached to this user
-		// see if there are any hashes
-	}
-	
-	
+	}	
 }
 
 /*
@@ -2138,6 +2153,84 @@ function _rule_announcement($node, $update = FALSE){
 		if (!empty($userObj->field_pearson_user_phone)){
 			// this user has entered a phone number, send a text message
 			$number = $userObj->field_pearson_user_phone[LANGUAGE_NONE][0]['value'];
+			if (function_exists('twilio_send')) twilio_send($number, $msg);
+		} 
+	}
+}
+
+function _rule_iqt($node, $update = FALSE){
+	// $node is IQT
+	// $nodeObj is Course
+	
+	// $json = json_encode($node);
+	// dsm($json, 'json');
+	// return;
+	$node = json_decode('{"title":"Quiz 8","type":"pearson_iqt","uid":1,"status":1,"comment":0,"promote":0,"moderate":0,"sticky":0,"language":"und","field_pearson_iqt_titleheading":{"und":[{"value":"Week 8"}]},"field_pearson_iqt_time":{"und":[{"value":"2014-01-19T07:00:00Z","timezone":"UTC","timezone_db":"UTC","date_type":"date"}]},"field_pearson_iqt_guid":{"und":[{"value":"0899bb77-f484-4af6-9db3-6507c8e50eba"}]},"field_pearson_iqt_pointspossible":{"und":[{"value":20}]},"field_pearson_iqt_course":{"und":[{"target_id":"227","target_type":"node"}]},"changed":1384454238,"nid":"291","vid":"291","original":{"vid":"291","uid":"1","title":"Quiz 8","log":"","status":"1","comment":"0","promote":"0","sticky":"0","vuuid":"325a3c23-3529-4222-a64c-f2404b40ca8b","nid":"291","type":"pearson_iqt","language":"und","created":"1384453712","changed":"1384453712","tnid":"0","translate":"0","uuid":"2f25bccd-0d22-4702-a626-f7fc27e59134","revision_timestamp":"1384453712","revision_uid":"1","field_pearson_iqt_course":{"und":[{"target_id":"227"}]},"field_pearson_iqt_titleheading":{"und":[{"value":"Week 8","format":null,"safe_value":"Week 8"}]},"field_pearson_iqt_time":{"und":[{"value":"2014-01-19T07:00:00Z","timezone":"UTC","timezone_db":"UTC","date_type":"date"}]},"field_pearson_iqt_guid":{"und":[{"value":"0899bb77-f484-4af6-9db3-6507c8e50eba","format":null,"safe_value":"0899bb77-f484-4af6-9db3-6507c8e50eba"}]},"field_pearson_iqt_pointspossible":{"und":[{"value":"20"}]},"rdf_mapping":{"rdftype":["sioc:Item","foaf:Document"],"title":{"predicates":["dc:title"]},"created":{"predicates":["dc:date","dc:created"],"datatype":"xsd:dateTime","callback":"date_iso8601"},"changed":{"predicates":["dc:modified"],"datatype":"xsd:dateTime","callback":"date_iso8601"},"body":{"predicates":["content:encoded"]},"uid":{"predicates":["sioc:has_creator"],"type":"rel"},"name":{"predicates":["foaf:name"]},"comment_count":{"predicates":["sioc:num_replies"],"datatype":"xsd:integer"},"last_activity":{"predicates":["sioc:last_activity_date"],"datatype":"xsd:dateTime","callback":"date_iso8601"}},"cid":0,"last_comment_timestamp":"1384453712","last_comment_name":"","last_comment_uid":"1","comment_count":0,"name":"mpurvis","picture":"1","data":"b:0;"},"is_new":false,"created":1384454238,"timestamp":1384454238,"uuid":"1f38156c-bf88-47d2-ac27-14cea015946b","vuuid":"a8bb37b2-f54e-4a82-9449-f5d7e437cfc4"}');
+	dsm($node, 'node');
+			
+	$nodeObj = node_load($node->field_pearson_iqt_course->und[0]->target_id);
+	// dsm($nodeObj, 'loaded course');
+
+	// $subject = $node->field_pearson_ann_subject->und[0]->value;
+	// $text = $node->field_pearson_ann_text->und[0]->value;
+	// $text = (strlen($text) > 53) ? substr($text,0,50).'...' : $text;
+	
+	$titleHeading = $node->field_pearson_iqt_titleheading[LANGUAGE_NONE][0]['value'];
+	$t = new DateTime($node->field_pearson_iqt_time[LANGUAGE_NONE][0]['value']);
+	$time = $t->format('l, n/j/Y'); // Monday, 1/19,2014
+	$points = $node->field_pearson_iqt_pintspossible[LANGUAGE_NONE][0]['value'];
+		
+	$courseCode = $nodeObj->field_pearson_course_code[LANGUAGE_NONE][0]['value'];
+	
+	// dsm($subject);
+	// dsm($text);
+	// dsm($courseCode);
+	
+	// determine if new or updated announcement
+	$msg = '';
+	if ($update){
+		$msg = 'UPDATE: Upcoming Exam for ' . $courseCode . ' on ' . $time . ' during ' . $titleHeading;
+	} else {
+		$msg = 'Upcoming Exam for ' . $courseCode . ' on ' . $time . ' during ' . $titleHeading;
+	}	
+
+	// get student information, send text to all people who have entered their cell number
+	$numbers = array();
+	foreach ($nodeObj->field_pearson_course_users[LANGUAGE_NONE] as $key => $value) {
+		$uid = $value['target_id'];
+		$userObj = user_load($uid);
+		if (!empty($userObj->field_pearson_user_phone)){
+			// this user has entered a phone number			
+			$number = $userObj->field_pearson_user_phone[LANGUAGE_NONE][0]['value'];
+			// now check to see if they have set a goal for this class
+			$q = db_select('field_data_field_pearson_goal_user', 'u');
+			$q->fields('u', array('entity_id'))->condition('u.field_pearson_goal_user_target_id', $uid);
+			$r = $q->execute()->fetch(); // only one goal per course
+			if (empty($r)){
+				// they have no goal
+				$msg .= '. This will be worth ' . $points . ' points.';
+			} else {
+				// they have a goal, append the message
+				$goalObj = node_load($r->entity_id);
+				$percent = $goalObj->field_pearson_goal_percent[LANGUAGE_NONE][0]['value'];
+				// now we need to get the total points for the class, add the points for this item
+				//		and calculate what they'll need to get on this exam
+				// BELOW: recorded as one of the API calls in todo.txt
+				$rosterTotalsObj = remoteOAuth1('/courses/' . $nodeObj->field_pearson_course_code[LANGUAGE_NONE][0]['value'] . '/gradebook/rostercoursegradestodate');
+				// this contains all the students, so loop through until we find the correct user
+				foreach ($rosterTotalsObj->rosterCourseGradesToDate as $k2) {
+					$pearsonUID = $userObj->field_pearson_user_id[LANGUAGE_NONE][0]['value'];
+					if ($k2->student->id == $pearsonUID){
+						// then lets get the earned and possible points for this person
+						$earnedPoints = $rosterTotalsObj->rosterCourseGradesToDate[0]->courseGradeToDate->earned;
+						$possiblePoints = $rosterTotalsObj->rosterCourseGradesToDate[0]->courseGradeToDate->possible;
+						// TODO: LEFTOFF here where i need to calculate how much this person needs to get on the exam to reach their goal, and append it to the $msg						
+					}
+				}
+
+			}
+			
+			
 			if (function_exists('twilio_send')) twilio_send($number, $msg);
 		} 
 	}
