@@ -635,7 +635,7 @@ function checkIQT($uidForce = FALSE){
 		->fields('c', array('entity_id'))
 		->condition('p.field_pearson_user_phone_value', '', '!=');
 	$r = $q->execute()->fetchAll();
-	dsm($r, 'results');
+	// dsm($r, 'results');
 	
 	$IQTs = array(); // this will be filled with objects that will be turend into nodes
 	
@@ -646,10 +646,10 @@ function checkIQT($uidForce = FALSE){
 		$cid = $v->field_pearson_course_number_value;
 		$nid = $v->entity_id;
 		$upcoming = remoteOAuth1("/users/$uid/courses/$cid/upcomingevents");
-		dsm($upcoming, 'upcoming');
+		// dsm($upcoming, 'upcoming');
 		
 		foreach ($upcoming->upcomingEvents as $key => $value) {
-			dsm($value, 'value');
+			// dsm($value, 'value');
 			if ($value->type != 'IQT' || $value->category != 'start') continue; // we only care about Quizzes (IQT), and we only want when it starts (not ends)
 			
 			// look for all IQT's and build array of objects
@@ -676,8 +676,7 @@ function checkIQT($uidForce = FALSE){
 			$newNode = (object) NULL;
 			$newNode->title = $title;
 			$newNode->type = 'pearson_iqt';
-			$newNode->uid = 1;
-			$newNode->changed = strtotime("now");
+			$newNode->uid = 1;			
 			$newNode->status = 1;
 			$newNode->comment = 0;
 			$newNode->promote = 0;
@@ -700,9 +699,63 @@ function checkIQT($uidForce = FALSE){
 	
 	foreach ($IQTs as $newNode) {
 		// TODO: check to see if it exists, whether to update or create new
-		node_save($newNode);
+		// let's get the entity_id (node id) of the IQT if it exists
+		$guid = $newNode->field_pearson_iqt_guid[LANGUAGE_NONE][0]['value'];
+		$q = db_select('field_data_field_pearson_iqt_guid', 'g');
+		$q->fields('g', array('entity_id'))->condition('g.field_pearson_iqt_guid_value', $guid);
+		$r = $q->execute()->fetch();
+		dsm($r, 'r');
+		// go ahead and compute the hash right now so we can use it in if blocks below
+				
+		dsm($newNode, 'newnode');
+		
+		$serObj = serialize($newNode);
+		$computedHash = hash("crc32b", $serObj);
+		dsm($computedHash, 'computedhash');
+		// this has to be added in after the hash is computed or else it will always change the hash		
+		$newNode->changed = strtotime("now");		
+		
+		if (empty($r)){
+			dsm('one');
+			// we are creating a new IQT node
+			$newNode->created = strtotime("now");	
+			$newNode->is_new = TRUE;
+			// dsm($newNode, 'newnode BEFORE');
+			$brandNewNode = node_save($newNode);
+			// dsm($newNode, 'newnode AFTER');
+			// dsm($brandNewNode, 'brandnewnode');
+			_add_hash('iqt', $guid, $computedHash, $newNode);	
+		} else {
+			// lets see if there is a hashed value
+			dsm($guid, 'guid value');
+			$q2 = db_select('pearson_mp_hashes', 'p');
+			$q2->fields('p', array('hash'))->condition('p.type', 'iqt')->condition('p.description', $guid);
+			$r2 = $q2->execute()->fetch();
+			dsm($r2, 'r2');
+			if (empty($r2)){
+				dsm('two');
+				// no hash stored in the database
+				$newNode->nid = $r->entity_id;
+				$newNode->vid = $r->entity_id; // will throw notice without this line					
+				node_save($newNode);
+				_add_hash('iqt', $guid, $computedHash, $newNode);				
+			} else {
+				// there is a hash, compare it with the current object we're about to save
+				$storedHash = $r2->hash;
+				if ($computedHash != $storedHash){ // hashes differ
+					dsm('three');
+					// we are updating this IQT node
+					$newNode->nid = $r->entity_id;
+					$newNode->vid = $r->entity_id; // will throw notice without this line					
+					node_save($newNode);
+					_add_hash('iqt', $guid, $computedHash, $newNode);
+				}				
+			}
+		}
+		
 	}
 	
+	// TODO: make it so when they change their phone number in the user profile, we tweak the hashes deliberately
 	if ($uidForce){
 		// we want to change any existing hashes in the database involving IQTs attached to this user
 		// see if there are any hashes
