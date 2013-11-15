@@ -233,6 +233,138 @@ function pearson_mp_animal($js = NULL, $step = NULL) {
   }
 }
 
+function pearson_mp_animal2($js = NULL, $step = NULL) {
+  if ($js) {
+    ctools_include('modal');
+    ctools_include('ajax');
+  }
+
+  $form_info = array(
+    'id' => 'animals',
+    // 'path' => "pearson_mp/" . ($js ? 'ajax' : 'nojs') . "/animal2/" . arg(3) . '/' . arg(4),
+    // 'path' => "pearson_mp/" . ($js ? 'ajax' : 'nojs') . "/animal/%step",
+    'show trail' => FALSE,
+    'show back' => FALSE,
+    'show cancel' => FALSE,
+    'show return' => FALSE,
+    // 'finish callback' => 'pearson_mp_wizard_finish',
+    // 'cancel callback' => 'pearson_mp_wizard_cancel',
+   // this controls order, as well as form labels
+    'order' => array(
+      'start' => t('Announcement'),
+    ),
+   // here we map a step to a form id.
+    'forms' => array(
+      // e.g. this for the step at wombat/create
+      'start' => array(
+        'form id' => 'pearson_mp_start2'
+      ),
+    ),
+  );  
+
+  $form_state = array(
+    'ajax' => $js,
+    // Put our object and ID into the form state cache so we can easily find
+    // it.
+    'object_id' => $object_id,
+    'object' => &$object,
+  );
+
+	// mike: here we add the course and user info
+  $args = arg();
+  // dsm($args, 'args');
+  if (count($args) == 5){
+  	// we want there to be the uid and nid passed in
+  	$form_state['type'] = arg(3); 
+  	$form_state['nid'] = arg(4); 
+  }
+  $type = $form_state['uid'];
+  $nid = $form_state['nid'];
+
+  // dsm($form_state, 'fs');
+  
+  // see if there is an existing goal node for this user and course
+  
+  // $query = db_select('field_data_field_pearson_goal_course', 'c');
+  // $query->join('field_data_field_pearson_goal_user', 'u', 'c.entity_id = u.entity_id');
+  // $query->join('field_data_field_pearson_goal_percent', 'p', 'u.entity_id = p.entity_id');
+  // $query->fields('p', array('field_pearson_goal_percent_value'))
+    // ->fields('c', array('entity_id'))
+  	// ->condition('u.field_pearson_goal_user_target_id', $uid)
+	// ->condition('c.field_pearson_goal_course_target_id', $nid);
+  // $results = $query->execute()->fetch();
+//   
+  // // dsm($results);  
+//   
+  // if (empty($results)){
+  	// // NO GOAL for this person and course
+  	// $form_state['hasGoal'] = FALSE;
+	// $form_state['goalValue'] = '';
+	// $form_state['goalID'] = '';
+  // } else {
+  	// // GOAL EXISTS for this person and course
+  	// $form_state['hasGoal'] = TRUE;
+  	// $form_state['goalValue'] = $results->field_pearson_goal_percent_value;
+	// $form_state['goalID'] = $results->entity_id;
+  // }
+  
+
+  
+  // Send this all off to our form. This is like drupal_get_form only wizardy.
+  ctools_include('wizard');
+  $form = ctools_wizard_multistep_form($form_info, $step, $form_state);
+  // dsm($form, 'form');
+  // $form['goal']['#default_value'] = 'test';
+  unset($form['buttons']['return']); // hack to remove the 'Finish' button
+  $form['goal']['#value'] = $form_state['goalValue'];
+  // dsm($form, 'form');
+  $output = drupal_render($form);  
+
+  // If $output is FALSE, there was no actual form.
+  
+  if ($js) {
+  	// dsm($js. 'js');
+    // If javascript is active, we have to use a render array.
+    $commands = array();
+    // if ($output === FALSE || !empty($form_state['complete'])) {
+    	// dsm('first');
+      // // Dismiss the modal.
+      // // TODO: Validation
+//       
+      // // _save_goal($form_state['hasGoal'], $form_state['goalValue'], $form_state['values']['goal'], $form_state['goalID'], $uid, $nid);
+//       
+// 	  
+	  // $goalLink = ctools_modal_text_button(t('Change goal'), "pearson_mp/nojs/animal/$uid/$nid", t('Set goal'),  'ctools-modal-ctools-sample-style');
+      // $container = theme('pearson_goal_container', array('content' => "$goalLink <span class=\"pearsonBig\">{$form_state['values']['goal']}%</span>", 'nid' => $nid));
+//     
+      // $commands[] = ajax_command_html('#pearson-goal-num' . $nid, $container);
+      // $commands[] = ctools_modal_command_dismiss();	  
+    // }
+    // else if (!empty($form_state['cancel'])) {
+    	// dsm('second');
+      // // If cancelling, return to the activity.
+      // $commands[] = ctools_modal_command_dismiss();
+    // }
+    // else {
+    	// dsm('third');
+        $commands = ctools_modal_form_render($form_state, $output);
+    // }
+    print ajax_render($commands);
+    exit;
+  }
+  else {
+    if ($output === FALSE || !empty($form_state['complete'])) {
+      return $animal;
+    }
+    else if (!empty($form_state['cancel'])) {
+      drupal_goto('');
+    }
+    else {
+      return $output;
+    }
+  }
+}
+
 function pearson_mp_wizard_finish(&$form_state) {
   $form_state['complete'] = TRUE;
 }
@@ -253,6 +385,26 @@ function pearson_mp_start($form, &$form_state) {
 	  '#size' => 10,
 	  '#maxlength' => 4,
 	  '#required' => TRUE,
+	);  
+
+  return $form;
+}
+
+function pearson_mp_start2($form, &$form_state) {
+  $form_state['title'] = t('Announcement');
+  
+  // dsm($form_state, 'fs');
+  $nodeObj = node_load($form_state['nid']);
+  dsm($nodeObj, 'nodeobj');
+  
+  $subject = $nodeObj->field_pearson_ann_subject[LANGUAGE_NONE][0]['value'];
+  $text = $nodeObj->field_pearson_ann_text[LANGUAGE_NONE][0]['value'];
+  
+  $annContent = "<h3>$subject</h3><span class=\"pearsonBig\">$text</span>";
+	
+	$form['mk'] = array(
+	  '#type' => 'markup',
+	  '#markup' => $annContent,
 	);  
 
   return $form;
@@ -319,6 +471,22 @@ function pearson_mp_menu(){
     'type' => MENU_CALLBACK,
   );	
 	
+  $items['pearson_mp/%ctools_js/animal2/%/%'] = array(
+      'title' => 'Goal',
+      'page callback' => 'pearson_mp_animal2',
+      'page arguments' => array(1),
+      'access callback' => TRUE,
+      'type' => MENU_CALLBACK,
+  );	  
+  
+  $items['pearson_mp/%ctools_js/animal2'] = array(
+      'title' => 'Goal',
+      'page callback' => 'pearson_mp_animal2',
+      'page arguments' => array(1),
+      'access callback' => TRUE,
+      'type' => MENU_CALLBACK,
+  );	
+  
   $items['pearson_mp/%ctools_js/animal/%/%'] = array(
       'title' => 'Goal',
       'page callback' => 'pearson_mp_animal',
@@ -393,15 +561,47 @@ function pearson_mp_menu(){
 }
 
 function pearson_mp_page(){
+	
+  ctools_include('ajax');
   ctools_include('modal');
-  ctools_modal_add_js();
-  return '<div id="magical-modal-link">' . l('testing', 'pearson_mp/nojs', array('attributes' => array('class' => 'ctools-use-modal'))) . '</div>';
+  
+  ctools_modal_add_js();	
+  // Create our own javascript that will be used to theme a modal.
+  $sample_style = array(
+    'ctools-sample-style' => array(
+      'modalSize' => array(
+        'type' => 'fixed',
+        'width' => 800,
+        'height' => 800,
+        'addWidth' => 20,
+        'addHeight' => 15,
+      ),
+      'modalOptions' => array(
+        'opacity' => .5,
+        'background-color' => '#000',
+      ),
+      'animation' => 'fadeIn',
+      'modalTheme' => 'CToolsSampleModal',
+      'throbber' => theme('image', array('path' => ctools_image_path('ajax-loader.gif', 'ctools_ajax_sample'), 'alt' => t('Loading...'), 'title' => t('Loading'))),
+    ),
+  );
+
+  drupal_add_js($sample_style, 'setting');	
+  
+  ctools_add_js('ctools-ajax-sample', 'ctools_ajax_sample');
+  ctools_add_css('ctools-ajax-sample', 'ctools_ajax_sample');  
+  
+  $goalLink = ctools_modal_text_button(t('Change goal2'), "pearson_mp/nojs/animal2/ann/263", t('Set goal2'),  'ctools-modal-ctools-sample-style');
+  return $goalLink;
+  // return '<div id="magical-modal-link">' . l('testing', 'pearson_mp/nojs/animal2/abc/123', array('attributes' => array('class' => array('ctools-use-modal', 'findthis')))) . '</div>';
+  // return '<div id="magical-modal-link">' . l('testing', 'pearson_mp/nojs/animal2/abc/123', array('attributes' => array('class' => 'findthis'))) . '</div>';
 }
 
 function pearson_mp_callback($ajax) {
   if ($ajax) {
     ctools_include('ajax');
     ctools_include('modal');
+	
  
     $form_state = array(
       'ajax' => TRUE,
@@ -410,6 +610,7 @@ function pearson_mp_callback($ajax) {
  
     // Use ctools to generate ajax instructions for the browser to create
     // a form in a modal popup.
+    // $output = '<div id="styleAnn">' . ctools_modal_form_wrapper('pearson_mp_ann_form', $form_state) . '</div>';
     $output = ctools_modal_form_wrapper('pearson_mp_ann_form', $form_state);
  
     // If the form has been submitted, there may be additional instructions
@@ -417,6 +618,7 @@ function pearson_mp_callback($ajax) {
     if (!empty($form_state['ajax_commands'])) {
       $output = $form_state['ajax_commands'];
     }
+	dsm($output, 'output');
  
     // Return the ajax instructions to the browser via ajax_render().
     print ajax_render($output);
@@ -429,16 +631,11 @@ function pearson_mp_callback($ajax) {
 function pearson_mp_ann_form($form, $form_state) {
   $form = array();
  
-  $form['new_link_text'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Link text'),
-  );
- 
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Submit'),
-  );
- 
+	$form['mark'] = array(
+	 '#type' => 'markup',
+	 '#markup' => "this is where Ann content goes",
+	);
+	 
   return $form;
 }
 
@@ -1540,7 +1737,6 @@ function remoteOAuth2GET($accessToken, $route, $decode = TRUE){
 
 function remoteOAuth2POST($access, $route, $body){
 	// set up header
-	// watchdog('findthis', 'trying with body of ' . $body, NULL, WATCHDOG_CRITICAL);
 
 	$header = 'X-Authorization: Access_Token access_token=' . $access;
 	$curl = curl_init();
