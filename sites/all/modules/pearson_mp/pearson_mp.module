@@ -305,6 +305,20 @@ function _save_goal($hasGoal, $goalValue, $newValue, $goalID, $uid, $nid){
 // hook_menu
 function pearson_mp_menu(){
 	$items = array();
+
+  $items['pearson_mp/page'] = array(
+    'page callback' => 'pearson_mp_page',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+ 
+  $items['pearson_mp/%ctools_js'] = array(
+    'page callback' => 'pearson_mp_callback',
+    'page arguments' => array(1),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );	
+	
   $items['pearson_mp/%ctools_js/animal/%/%'] = array(
       'title' => 'Goal',
       'page callback' => 'pearson_mp_animal',
@@ -376,6 +390,56 @@ function pearson_mp_menu(){
    );    
     
   return $items;
+}
+
+function pearson_mp_page(){
+  ctools_include('modal');
+  ctools_modal_add_js();
+  return '<div id="magical-modal-link">' . l('testing', 'pearson_mp/nojs', array('attributes' => array('class' => 'ctools-use-modal'))) . '</div>';
+}
+
+function pearson_mp_callback($ajax) {
+  if ($ajax) {
+    ctools_include('ajax');
+    ctools_include('modal');
+ 
+    $form_state = array(
+      'ajax' => TRUE,
+      'title' => t('MyModule Modal Form'),
+    );
+ 
+    // Use ctools to generate ajax instructions for the browser to create
+    // a form in a modal popup.
+    $output = ctools_modal_form_wrapper('pearson_mp_ann_form', $form_state);
+ 
+    // If the form has been submitted, there may be additional instructions
+    // such as dismissing the modal popup.
+    if (!empty($form_state['ajax_commands'])) {
+      $output = $form_state['ajax_commands'];
+    }
+ 
+    // Return the ajax instructions to the browser via ajax_render().
+    print ajax_render($output);
+    drupal_exit();
+  }
+  else {
+    return drupal_get_form('pearson_mp_ann_form');
+  }
+}
+function pearson_mp_ann_form($form, $form_state) {
+  $form = array();
+ 
+  $form['new_link_text'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Link text'),
+  );
+ 
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Submit'),
+  );
+ 
+  return $form;
 }
 
 function _pearson_settings($form, &$form_state) {
