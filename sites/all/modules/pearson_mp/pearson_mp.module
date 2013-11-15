@@ -206,7 +206,7 @@ function pearson_mp_animal($js = NULL, $step = NULL) {
       $container = theme('pearson_goal_container', array('content' => "$goalLink <span class=\"pearsonBig\">{$form_state['values']['goal']}%</span>", 'nid' => $nid));
     
       $commands[] = ajax_command_html('#pearson-goal-num' . $nid, $container);
-      $commands[] = ctools_modal_command_dismiss();
+      $commands[] = ctools_modal_command_dismiss();	  
     }
     else if (!empty($form_state['cancel'])) {
     	// dsm('second');
@@ -1864,7 +1864,7 @@ function pearson_mp_user_view($account, $view_mode, $langcode){
 			    'ctools-sample-style' => array(
 			      'modalSize' => array(
 			        'type' => 'fixed',
-			        'width' => 500,
+			        'width' => 400,
 			        'height' => 300,
 			        'addWidth' => 20,
 			        'addHeight' => 15,

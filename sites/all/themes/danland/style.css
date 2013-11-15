@@ -1679,8 +1679,9 @@ span.pearsonBig {
     height: 175px;
 }
 
-.form-item-goal {
+#pearson-mp-start .form-item-goal label {
     font-size: 31px;
+    width: 9em !important;
 }
 
 
