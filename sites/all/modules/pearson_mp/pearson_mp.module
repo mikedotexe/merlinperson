@@ -2165,21 +2165,25 @@ function _rule_iqt($node, $update = FALSE){
 	// $json = json_encode($node);
 	// dsm($json, 'json');
 	// return;
-	$node = json_decode('{"title":"Quiz 8","type":"pearson_iqt","uid":1,"status":1,"comment":0,"promote":0,"moderate":0,"sticky":0,"language":"und","field_pearson_iqt_titleheading":{"und":[{"value":"Week 8"}]},"field_pearson_iqt_time":{"und":[{"value":"2014-01-19T07:00:00Z","timezone":"UTC","timezone_db":"UTC","date_type":"date"}]},"field_pearson_iqt_guid":{"und":[{"value":"0899bb77-f484-4af6-9db3-6507c8e50eba"}]},"field_pearson_iqt_pointspossible":{"und":[{"value":20}]},"field_pearson_iqt_course":{"und":[{"target_id":"227","target_type":"node"}]},"changed":1384454238,"nid":"291","vid":"291","original":{"vid":"291","uid":"1","title":"Quiz 8","log":"","status":"1","comment":"0","promote":"0","sticky":"0","vuuid":"325a3c23-3529-4222-a64c-f2404b40ca8b","nid":"291","type":"pearson_iqt","language":"und","created":"1384453712","changed":"1384453712","tnid":"0","translate":"0","uuid":"2f25bccd-0d22-4702-a626-f7fc27e59134","revision_timestamp":"1384453712","revision_uid":"1","field_pearson_iqt_course":{"und":[{"target_id":"227"}]},"field_pearson_iqt_titleheading":{"und":[{"value":"Week 8","format":null,"safe_value":"Week 8"}]},"field_pearson_iqt_time":{"und":[{"value":"2014-01-19T07:00:00Z","timezone":"UTC","timezone_db":"UTC","date_type":"date"}]},"field_pearson_iqt_guid":{"und":[{"value":"0899bb77-f484-4af6-9db3-6507c8e50eba","format":null,"safe_value":"0899bb77-f484-4af6-9db3-6507c8e50eba"}]},"field_pearson_iqt_pointspossible":{"und":[{"value":"20"}]},"rdf_mapping":{"rdftype":["sioc:Item","foaf:Document"],"title":{"predicates":["dc:title"]},"created":{"predicates":["dc:date","dc:created"],"datatype":"xsd:dateTime","callback":"date_iso8601"},"changed":{"predicates":["dc:modified"],"datatype":"xsd:dateTime","callback":"date_iso8601"},"body":{"predicates":["content:encoded"]},"uid":{"predicates":["sioc:has_creator"],"type":"rel"},"name":{"predicates":["foaf:name"]},"comment_count":{"predicates":["sioc:num_replies"],"datatype":"xsd:integer"},"last_activity":{"predicates":["sioc:last_activity_date"],"datatype":"xsd:dateTime","callback":"date_iso8601"}},"cid":0,"last_comment_timestamp":"1384453712","last_comment_name":"","last_comment_uid":"1","comment_count":0,"name":"mpurvis","picture":"1","data":"b:0;"},"is_new":false,"created":1384454238,"timestamp":1384454238,"uuid":"1f38156c-bf88-47d2-ac27-14cea015946b","vuuid":"a8bb37b2-f54e-4a82-9449-f5d7e437cfc4"}');
+	// $node = json_decode('{"title":"Quiz 8","type":"pearson_iqt","uid":1,"status":1,"comment":0,"promote":0,"moderate":0,"sticky":0,"language":"und","field_pearson_iqt_titleheading":{"und":[{"value":"Week 8"}]},"field_pearson_iqt_time":{"und":[{"value":"2014-01-19T07:00:00Z","timezone":"UTC","timezone_db":"UTC","date_type":"date"}]},"field_pearson_iqt_guid":{"und":[{"value":"0899bb77-f484-4af6-9db3-6507c8e50eba"}]},"field_pearson_iqt_pointspossible":{"und":[{"value":20}]},"field_pearson_iqt_course":{"und":[{"target_id":"227","target_type":"node"}]},"changed":1384454238,"nid":"291","vid":"291","original":{"vid":"291","uid":"1","title":"Quiz 8","log":"","status":"1","comment":"0","promote":"0","sticky":"0","vuuid":"325a3c23-3529-4222-a64c-f2404b40ca8b","nid":"291","type":"pearson_iqt","language":"und","created":"1384453712","changed":"1384453712","tnid":"0","translate":"0","uuid":"2f25bccd-0d22-4702-a626-f7fc27e59134","revision_timestamp":"1384453712","revision_uid":"1","field_pearson_iqt_course":{"und":[{"target_id":"227"}]},"field_pearson_iqt_titleheading":{"und":[{"value":"Week 8","format":null,"safe_value":"Week 8"}]},"field_pearson_iqt_time":{"und":[{"value":"2014-01-19T07:00:00Z","timezone":"UTC","timezone_db":"UTC","date_type":"date"}]},"field_pearson_iqt_guid":{"und":[{"value":"0899bb77-f484-4af6-9db3-6507c8e50eba","format":null,"safe_value":"0899bb77-f484-4af6-9db3-6507c8e50eba"}]},"field_pearson_iqt_pointspossible":{"und":[{"value":"20"}]},"rdf_mapping":{"rdftype":["sioc:Item","foaf:Document"],"title":{"predicates":["dc:title"]},"created":{"predicates":["dc:date","dc:created"],"datatype":"xsd:dateTime","callback":"date_iso8601"},"changed":{"predicates":["dc:modified"],"datatype":"xsd:dateTime","callback":"date_iso8601"},"body":{"predicates":["content:encoded"]},"uid":{"predicates":["sioc:has_creator"],"type":"rel"},"name":{"predicates":["foaf:name"]},"comment_count":{"predicates":["sioc:num_replies"],"datatype":"xsd:integer"},"last_activity":{"predicates":["sioc:last_activity_date"],"datatype":"xsd:dateTime","callback":"date_iso8601"}},"cid":0,"last_comment_timestamp":"1384453712","last_comment_name":"","last_comment_uid":"1","comment_count":0,"name":"mpurvis","picture":"1","data":"b:0;"},"is_new":false,"created":1384454238,"timestamp":1384454238,"uuid":"1f38156c-bf88-47d2-ac27-14cea015946b","vuuid":"a8bb37b2-f54e-4a82-9449-f5d7e437cfc4"}');
 	dsm($node, 'node');
 	
-	$nodeObj = node_load($node->field_pearson_iqt_course->und[0]->target_id);
-	dsm($nodeObj, 'loaded course');
+	// $nodeObj = node_load($node->field_pearson_iqt_course->und[0]->target_id);
+	$nodeObj = node_load($node->field_pearson_iqt_course[LANGUAGE_NONE][0]['target_id']);
+	// dsm($nodeObj, 'loaded course');
 	// return;
 
 	// $subject = $node->field_pearson_ann_subject->und[0]->value;
 	// $text = $node->field_pearson_ann_text->und[0]->value;
 	// $text = (strlen($text) > 53) ? substr($text,0,50).'...' : $text;
 	
-	$titleHeading = $node->field_pearson_iqt_titleheading->und[0]->value;
-	$t = new DateTime($node->field_pearson_iqt_time->und[0]->value);
+	$titleHeading = $node->field_pearson_iqt_titleheading[LANGUAGE_NONE][0]['value'];
+	// $titleHeading = $node->field_pearson_iqt_titleheading->und[0]->value;
+	// $t = new DateTime($node->field_pearson_iqt_time->und[0]->value);
+	$t = new DateTime($node->field_pearson_iqt_time[LANGUAGE_NONE][0]['value']);
 	$time = $t->format('l, n/j/Y'); // Monday, 1/19,2014
-	$points = $node->field_pearson_iqt_pointspossible->und[0]->value;
+	$points = $node->field_pearson_iqt_pointspossible[LANGUAGE_NONE][0]['value'];
+	// $points = $node->field_pearson_iqt_pointspossible->und[0]->value;
 		
 	$courseCode = $nodeObj->field_pearson_course_code[LANGUAGE_NONE][0]['value'];
 	
@@ -2205,7 +2209,8 @@ function _rule_iqt($node, $update = FALSE){
 			$number = $userObj->field_pearson_user_phone[LANGUAGE_NONE][0]['value'];
 			// now check to see if they have set a goal for this class
 			$q = db_select('field_data_field_pearson_goal_user', 'u');
-			$q->fields('u', array('entity_id'))->condition('u.field_pearson_goal_user_target_id', $uid);
+			$q->join('field_data_field_pearson_goal_course', 'c', 'u.entity_id = c.entity_id');
+			$q->fields('u', array('entity_id'))->condition('u.field_pearson_goal_user_target_id', $uid)->condition('c.field_pearson_goal_course_target_id', $nodeObj->nid);
 			$r = $q->execute()->fetch(); // only one goal per course
 			if (empty($r)){
 				// they have no goal
@@ -2218,7 +2223,7 @@ function _rule_iqt($node, $update = FALSE){
 				//		and calculate what they'll need to get on this exam
 				// BELOW: recorded as one of the API calls in todo.txt
 				$rosterTotalsObj = remoteOAuth1('/courses/' . $nodeObj->field_pearson_course_number[LANGUAGE_NONE][0]['value'] . '/gradebook/rostercoursegradestodate');
-				dsm($rosterTotalsObj, '$rosterTotalsObj');
+				// dsm($rosterTotalsObj, '$rosterTotalsObj');
 				// this contains all the students, so loop through until we find the correct user
 				foreach ($rosterTotalsObj->rosterCourseGradesToDate as $k2) {
 					$pearsonUID = $userObj->field_pearson_user_id[LANGUAGE_NONE][0]['value'];
@@ -2239,13 +2244,13 @@ function _rule_iqt($node, $update = FALSE){
 						// dont want the value to be above the total available
 						if ($need > $points){
 							// they can't possible reach their goal, even with a perfect score
-							$msg .= '. Try your best on this item to meet your goal!';
+							$msg .= '. Try your best on this item to meet your ' . $percent . '% goal!';
 						} else if ($need < 0){
 							// they already have a much higher percentage than their set goal
-							$msg .= '. You will meet your goal with or without a great score.';
+							$msg .= '. You will meet your ' . $percent . '% goal with or without a great score.';
 						} else {
 							// there is a value they can score that will bring them to their goal
-							$msg .= '. You can reach your goal by scoring a ' . $need . '/' . $points . '.';
+							$msg .= '. You can reach your ' . $percent . '% goal by scoring a ' . $need . '/' . $points . '.';
 						}
 					}
 				}
@@ -2253,7 +2258,7 @@ function _rule_iqt($node, $update = FALSE){
 			}
 			
 			dsm($msg, 'message to text');
-			// if (function_exists('twilio_send')) twilio_send($number, $msg);
+			if (function_exists('twilio_send')) twilio_send($number, $msg);
 		}
 	}
 }
