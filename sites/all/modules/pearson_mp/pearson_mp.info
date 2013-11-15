@@ -27,6 +27,7 @@ dependencies[] = entity
 dependencies[] = entityreference
 dependencies[] = views
 dependencies[] = views_ui
+dependencies[] = views_php
 ;  dependencies[] = services
 ;  dependencies[] = rest_server
 ;  dependencies[] = annresource
