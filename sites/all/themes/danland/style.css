@@ -1671,6 +1671,22 @@ span.pearsonBig {
     color: #C10202;
     margin: 1em ;
     text-shadow: 1px 1px 2px #999999;
-    font-size: 1.3em;
-    	
+    font-size: 1.3em;    	
+}
+
+#pearson-mp-start > div {
+    background: url("images/uhh/goal1.png") no-repeat scroll right bottom rgba(0, 0, 0, 0);
+    height: 175px;
+}
+
+.form-item-goal {
+    font-size: 31px;
+}
+
+
+input#edit-goal {
+    font-size: 32px;
+    margin: 0.5em 0;
+    padding: 0.5em;
+    width: 2em;
 }
