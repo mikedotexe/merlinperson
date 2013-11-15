@@ -1,0 +1,15 @@
+{ "rules_pearson_delete_iqt" : {
+    "LABEL" : "pearson delete iqt",
+    "PLUGIN" : "reaction rule",
+    "REQUIRES" : [ "rules", "php" ],
+    "ON" : [ "node_delete" ],
+    "IF" : [
+      { "node_is_of_type" : {
+          "node" : [ "node" ],
+          "type" : { "value" : { "pearson_iqt" : "pearson_iqt" } }
+        }
+      }
+    ],
+    "DO" : [ { "php_eval" : { "code" : "_remove_hash(\u0027iqt\u0027, $node);" } } ]
+  }
+}
