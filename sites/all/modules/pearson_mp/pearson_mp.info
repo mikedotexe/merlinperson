@@ -8,6 +8,9 @@ project = "Zpearson"
 package = "Zpearson"
 
 ; TODO: revisit dependencies
+
+dependencies[] = ctools
+dependencies[] = ctools_ajax_sample
 dependencies[] = bundle_copy
 dependencies[] = twilio
 dependencies[] = php
