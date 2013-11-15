@@ -11,7 +11,7 @@
       }
     ],
     "DO" : [
-      { "php_eval" : { "code" : "watchdog(\u0027pearson_mp\u0027, \u0027sending sms about IQT update via twilio\u0027);\r\n_rule_iqt($node, TRUE);\r\n\/\/if (function_exists(\u0027twilio_send\u0027)) twilio_send(\u00278089879854\u0027, \u0027updated iqt\u0027);" } }
+      { "php_eval" : { "code" : "watchdog(\u0027pearson_mp\u0027, \u0027sending sms about IQT update via twilio\u0027);\r\n_rule_iqt($node, TRUE);" } }
     ]
   }
 }
