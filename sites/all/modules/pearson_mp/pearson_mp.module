@@ -395,7 +395,7 @@ function pearson_mp_start2($form, &$form_state) {
   
   // dsm($form_state, 'fs');
   $nodeObj = node_load($form_state['nid']);
-  dsm($nodeObj, 'nodeobj');
+  // dsm($nodeObj, 'nodeobj');
   
   $subject = $nodeObj->field_pearson_ann_subject[LANGUAGE_NONE][0]['value'];
   $text = $nodeObj->field_pearson_ann_text[LANGUAGE_NONE][0]['value'];
@@ -571,8 +571,8 @@ function pearson_mp_page(){
     'ctools-sample-style' => array(
       'modalSize' => array(
         'type' => 'fixed',
-        'width' => 800,
-        'height' => 800,
+        'width' => 400,
+        'height' => 300,
         'addWidth' => 20,
         'addHeight' => 15,
       ),
