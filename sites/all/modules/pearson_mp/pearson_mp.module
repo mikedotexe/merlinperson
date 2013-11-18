@@ -1432,7 +1432,7 @@ function PearsonUpdateOrAdd($item){
 
 	$newNode->field_pearson_course_number[LANGUAGE_NONE][0]['value'] = $findCourseID;
 	$newNode->field_pearson_course_code[LANGUAGE_NONE][0]['value'] = $item->displayCourseCode;
-	$newNode->title = $item->title . 'findthis';
+	$newNode->title = $item->title;
 	
 	// call numbers
 	for ($i=0; $i < count($item->callNumbers); $i++) { 
