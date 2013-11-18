@@ -1678,11 +1678,16 @@ span.pearsonBig {
 #pearson-mp-start > div {
     background: url("images/uhh/goal1.png") no-repeat scroll right bottom rgba(0, 0, 0, 0);
     height: 175px;
+    /*height: 230px;*/   
+}
+#pearson-mp-start #edit-buttons {
+    margin-top: 81px;
 }
 
 #pearson-mp-start2 > div {
     background: url("images/uhh/fieldsetpsmall.png") no-repeat scroll right bottom rgba(0, 0, 0, 0);
     /*height: 175px;*/
+   height: 230px;
 }
 
 #pearson-mp-start .form-item-goal label {

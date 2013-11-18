@@ -2125,7 +2125,7 @@ function pearson_mp_user_view($account, $view_mode, $langcode){
 			      'modalSize' => array(
 			        'type' => 'fixed',
 			        'width' => 400,
-			        'height' => 300,
+			        'height' => 400,
 			        'addWidth' => 20,
 			        'addHeight' => 15,
 			      ),
