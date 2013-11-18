@@ -1600,7 +1600,8 @@ div.pearson-course-table table thead tr th, table.sticky-table thead tr th {
 }
 
 div.pearson-course-table table, table.sticky-table {
-	width: 57%;
+	/*width: 57%;*/
+	width: 64%;
 	float: left;
 	margin-bottom: 1em;
 }
