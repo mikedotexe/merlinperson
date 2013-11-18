@@ -838,7 +838,7 @@ function pearson_mp_cron(){
 	}
 	// watchdog('pearson_mp_debug', 'Calling checkC');
 	checkAnnouncements();
-	// checkIQT();
+	checkIQT();
 }
 
 /*
