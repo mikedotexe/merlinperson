@@ -531,6 +531,13 @@ function pearson_mp_menu(){
       'access callback' => TRUE,
       'type' => MENU_CALLBACK,
   );  
+  $items['pearson-mp/ajaxpie/%'] = array(
+      'title' => 'Made for a button',
+      'page callback' => '_prof_pie',
+      'page arguments' => array(2),
+      'access callback' => TRUE,
+      'type' => MENU_CALLBACK,
+  );  
   
   $items['mp/test/prof'] = array(
     'title' => 'Prof form',
@@ -2211,13 +2218,34 @@ function pearson_mp_user_view($account, $view_mode, $langcode){
 			);					
 		}
 		if ($isProf){
-			$pie = _prof_pie($classNode->nid);					
-			
-			// $pie['pie']['#weight'] = $account->content['course' . $pearsonCID]['view' . $i]['#weight'] + 1;
-			$pie['#weight'] = $account->content['course' . $pearsonCID]['view' . $i]['#weight'] + 1;
-			dsm($pie, 'pie');
-			
-			$account->content['pie' . $pearsonCID] = $pie;
+			// $together = $pearsonUID . '-' . $pearsonCID;
+			// $together = $pearsonUID . '-' . $classNode->nid;
+			$together = $classNode->nid;
+			// dsm($together, 'together');
+			ctools_include('ajax');
+			// add button to check current grade
+			$account->content['course' . $pearsonCID]['pie' . $together] = array(
+			 '#type' => 'markup',
+			 '#weight' => $account->content['course' . $pearsonCID]['view' . $i]['#weight'] + 2,
+			 '#markup' => '<div id="pearsonpie' . $together . '" class="pearsonpie"></div>',
+			);			
+			$links = array();
+			// $links[] = ctools_ajax_text_button(t('How are the student goals?'), "pearson-mp/ajaxpie/1/" . $pearsonUID . '/' . $classNode->nid, t('View goals'));
+			$links[] = ctools_ajax_text_button(t('How are the student goals?'), "pearson-mp/ajaxpie/1/" . $pearsonUID . '/' . $classNode->nid, t('View goals'));
+			// dsm($links, 'links');
+			$output = theme('item_list', array('items' => $links, 'title' => t('Student goals')));
+			$account->content['course' . $pearsonCID]['piebtn' . $together] = array(
+			 '#type' => 'markup',
+			 '#weight' => $account->content['course' . $pearsonCID]['view' . $i]['#weight'] + 1,
+			 '#markup' => $output,
+			);			
+			// $pie = _prof_pie($classNode->nid);					
+// 			
+			// // $pie['pie']['#weight'] = $account->content['course' . $pearsonCID]['view' . $i]['#weight'] + 1;
+			// $pie['#weight'] = $account->content['course' . $pearsonCID]['view' . $i]['#weight'] + 1;
+			// dsm($pie, 'pie');
+// 			
+			// $account->content['pie' . $pearsonCID] = $pie;
 			
 		}		
 	} 
@@ -2226,7 +2254,8 @@ function pearson_mp_user_view($account, $view_mode, $langcode){
 /*
  * $nid is the class nid
  */  
-function _prof_pie($nid){
+// function _prof_pie($nid){
+function _prof_pie($js = NULL, $uid, $nid){
 	$q = db_select('field_data_field_pearson_course_users', 'u');
 	$q->join('users_roles', 'r', 'r.uid = u.field_pearson_course_users_target_id');
 	$q->join('role', 'x', 'x.rid = r.rid');
@@ -2305,7 +2334,29 @@ function _prof_pie($nid){
 	'#options' => $options_pie,
 	);
 		
-	return $build;
+	// return $build;
+	  if ($js) {
+	    ctools_include('ajax');
+	    $commands = array();
+	    // $commands[] = ajax_command_html('#pearsonpie' . $uid . '-' . $cid, $build);
+	    // $html = 'findthis';
+	    // $commands[] = ajax_command_html('#pearsonpie' . $uid . '-' . $cid, $build);
+	    // dsm($uid, 'uid');
+	    // dsm($puid, 'puid');
+	    // dsm($cid, 'cid');
+	    // dsm($nid, 'nid');
+		// $together =  $puid . '-' . $nid;
+		$together =  $nid;
+		// dsm($together, 'ajax together');
+	    // $commands[] = ajax_command_html('#pearsonpie' . $together, $build);
+	    $html = theme('visualization', $build);
+	    $commands[] = ajax_command_html('#pearsonpie' . $together, $html);
+	    print ajax_render($commands); // this function exits.
+	    exit;
+	  }
+	  else {
+	    return $output;
+	  }	
 }
 
 function _ajax_grade($js = NULL, $uid, $cid) {
