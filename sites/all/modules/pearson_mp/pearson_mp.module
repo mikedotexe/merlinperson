@@ -1058,6 +1058,36 @@ function checkIQT($uidForce = FALSE){
 }
 
 /*
+ * determine whether a new phone number has been added to this user profile
+ */
+function _user_save_phonecheck($account){
+	// dsm($account, 'account');
+	$currentPhone = $account->field_pearson_user_phone[LANGUAGE_NONE][0]['value'];
+	$variable = variable_get('uphone' . $account->uid);
+	if (empty($variable)){
+		// create a new array and add the current one as the first entry
+		$numbers = array($currentPhone);
+		checkIQT($account->uid);
+	} else {
+		$numbers = unserialize($variable);
+		// check to see if phone number is new
+		if (!in_array($currentPhone, $numbers)){
+			// new phone number
+			$numbers[] = $currentPhone; // add it
+			// send all the Exams and Announcements
+			checkIQT($account->uid);
+		} else {
+			// phone number already in there
+			return;
+		}
+		
+				
+	}
+	$serial = serialize($numbers);
+	variable_set('uphone' . $account->uid, $serial);	
+}
+
+/*
  * This handles the queue that looks to update/add announcements
  */
 
