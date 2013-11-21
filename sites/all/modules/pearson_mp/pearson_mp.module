@@ -999,7 +999,9 @@ function checkIQT($uidForce = FALSE){
 		// go ahead and compute the hash right now so we can use it in if blocks below
 				
 		// dsm($newNode, 'newnode');
-		
+		// unset($newNode->changed);
+		// unset($newNode->created);
+		// unset($newNode->timestamp);
 		$serObj = serialize($newNode);
 		$computedHash = hash("crc32b", $serObj);
 		// dsm($computedHash, 'computedhash');
@@ -1012,8 +1014,9 @@ function checkIQT($uidForce = FALSE){
 			$newNode->created = strtotime("now");	
 			$newNode->is_new = TRUE;
 			// dsm($newNode, 'newnode BEFORE');
-			$brandNewNode = node_save($newNode);
+			node_save($newNode);
 			// dsm($newNode, 'newnode AFTER');
+			watchdog('pearson_mp_db', 'new IQT');
 			// dsm($brandNewNode, 'brandnewnode');
 			_add_hash('iqt', $guid, $computedHash, $newNode);	
 		} else {
@@ -1029,6 +1032,8 @@ function checkIQT($uidForce = FALSE){
 				$newNode->nid = $r->entity_id;
 				$newNode->vid = $r->entity_id; // will throw notice without this line					
 				node_save($newNode);
+				// dsm($newNode, 'newnode AFTER2');
+				watchdog('pearson_mp_db', 'no hash for IQT');
 				_add_hash('iqt', $guid, $computedHash, $newNode);				
 			} else {
 				// there is a hash, compare it with the current object we're about to save
@@ -1039,7 +1044,12 @@ function checkIQT($uidForce = FALSE){
 					$newNode->nid = $r->entity_id;
 					$newNode->vid = $r->entity_id; // will throw notice without this line					
 					node_save($newNode);
+					// dsm($newNode, 'newnode AFTER3');
+					watchdog('pearson_mp_db', 'updating IQT');
 					_add_hash('iqt', $guid, $computedHash, $newNode);
+				} else {
+					// dsm('hash the same');
+					watchdog('pearson_mp_db', 'same hash for IQT');
 				}				
 			}
 		}
