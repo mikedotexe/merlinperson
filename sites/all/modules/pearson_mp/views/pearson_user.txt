@@ -120,9 +120,9 @@ $handler->display->display_options['filters']['rid']['id'] = 'rid';
 $handler->display->display_options['filters']['rid']['table'] = 'users_roles';
 $handler->display->display_options['filters']['rid']['field'] = 'rid';
 $handler->display->display_options['filters']['rid']['value'] = array(
-  13 => '13',
-  14 => '14',
-  15 => '15',
+  4 => '4',
+  5 => '5',
+  6 => '6',
 );
 $handler->display->display_options['filters']['rid']['exposed'] = TRUE;
 $handler->display->display_options['filters']['rid']['expose']['operator_id'] = 'rid_op';
@@ -133,9 +133,9 @@ $handler->display->display_options['filters']['rid']['expose']['remember_roles']
   2 => '2',
   1 => 0,
   3 => 0,
-  13 => 0,
-  14 => 0,
-  15 => 0,
+  4 => 0,
+  5 => 0,
+  6 => 0,
 );
 $handler->display->display_options['filters']['rid']['expose']['reduce'] = TRUE;
 
