@@ -1720,9 +1720,15 @@ input#edit-goal {
     box-shadow: 0 0 0.2em #000000;
     padding: 0.2em;
 }
+
 .purvisoff {
     background: none repeat scroll 0 0 #FFF;
     border-radius: 0.5em;
     box-shadow: 0 0 0.2em #000000;
     padding: 0.2em;
+}
+
+.form-item-field-pearson-user-phone-und-0-value {
+    background: none repeat scroll 0 0 #FFDA85;
+    color: #0000FF;
 }
