@@ -2103,10 +2103,11 @@ function pearson_mp_user_view($account, $view_mode, $langcode){
 			$links[] = l($fromSettings['pearson_linkdesc'][$i], $fromSettings['pearson_link'][$i], array('attributes' => array('target' => '_blank')));
 		}
 		$bred = implode('<br/>', $links);
-		$account->content['common_links'] = array(
-		 '#type' => 'markup',
-		 '#markup' => "<h3>Common Link(s):</h3> $bred<hr/>",
-		);
+		// TODO: decide to enable the Common Links feature, didnt get explained
+		// $account->content['common_links'] = array(
+		 // '#type' => 'markup',
+		 // '#markup' => "<h3>Common Link(s):</h3> $bred<hr/>",
+		// );
 	}
 	
 	// $origAccount = $account->content;
