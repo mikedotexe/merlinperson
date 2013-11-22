@@ -66,7 +66,7 @@ $handler->display->display_options['fields']['php']['php_output'] = '<?php
       \'modalSize\' => array(
         \'type\' => \'fixed\',
         \'width\' => 400,
-        \'height\' => 200,
+        \'height\' => 300,
         \'addWidth\' => 20,
         \'addHeight\' => 15,
       ),
