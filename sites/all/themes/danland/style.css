@@ -1675,6 +1675,13 @@ span.pearsonBig {
     font-size: 1.3em;    	
 }
 
+span.pearsonSmall {
+    color: #C10202;
+    margin: 1em ;
+    text-shadow: 1px 1px 2px #999999;
+    font-size: 0.81em;    	
+}
+
 #pearson-mp-start > div {
     background: url("images/uhh/goal1.png") no-repeat scroll right bottom rgba(0, 0, 0, 0);
     height: 175px;
@@ -1705,4 +1712,17 @@ input#edit-goal {
 
 #instruction {
     font-size: 1.19em;
+}
+
+.purvison {
+    background: none repeat scroll 0 0 #F4F4F4;
+    border-radius: 0.5em;
+    box-shadow: 0 0 0.2em #000000;
+    padding: 0.2em;
+}
+.purvisoff {
+    background: none repeat scroll 0 0 #FFF;
+    border-radius: 0.5em;
+    box-shadow: 0 0 0.2em #000000;
+    padding: 0.2em;
 }
