@@ -1702,3 +1702,7 @@ input#edit-goal {
     padding: 0.5em;
     width: 2em;
 }
+
+#instruction {
+    font-size: 1.19em;
+}
