@@ -2317,11 +2317,13 @@ function _prof_pie($js = NULL, $uid, $nid){
 		$q->join('field_data_field_pearson_goal_course', 'c', 'p.entity_id = c.entity_id');
 		$q->fields('p', array('field_pearson_goal_percent_value'))->condition('u.field_pearson_goal_user_target_id', $uid)->condition('c.field_pearson_goal_course_target_id', $nid);
 		$r2 = $q->execute()->fetch();
+		// dsm($r2, '$r2');
 		
 		if (empty($r2)){
 			$nogoal++;
 		} else {
 			$goal = $r2->field_pearson_goal_percent_value;
+			// dsm($goal, '$goal');
 			
 			$nodeObj = node_load($nid);
 			$cid = $nodeObj->field_pearson_course_number[LANGUAGE_NONE][0]['value'];
@@ -2329,16 +2331,20 @@ function _prof_pie($js = NULL, $uid, $nid){
 			// dsm($cid, 'cid');
 			$userObj = user_load($uid);
 			$puid = $userObj->field_pearson_user_id[LANGUAGE_NONE][0]['value'];
+			// dsm($puid, '$puid');
 			// dsm($userObj, 'userobj');
 			// dsm($puid, 'puid');
 			// now we must see what their actual average is
 			$gradeObj = remoteOAuth1("/users/$puid/courses/$cid/coursegradetodate");
 			// dsm($gradeObj, 'gradeobj');
-			$earnedPerc = $gradeObj->courseGradeToDate->average;			
+			$earnedPerc = $gradeObj->courseGradeToDate->average;
+			// dsm($earnedPerc, '$earnedPerc');			
 			
-			if ($goal >= $earnedPerc){
+			if ($earnedPerc >= $goal){
+				// dsm('$goal >= $earnedPerc');
 				$achieve++;
-			} else if ($goal < $earnedPerc){
+			} else if ($earnedPerc < $goal){
+				// dsm('$goal < $earnedPerc');
 				$below++;
 			}
 			// if they are
