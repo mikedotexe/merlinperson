@@ -2610,6 +2610,9 @@ function _rule_announcement($node, $update = FALSE){
 		if (!empty($userObj->field_pearson_user_phone)){
 			// this user has entered a phone number, send a text message
 			$number = $userObj->field_pearson_user_phone[LANGUAGE_NONE][0]['value'];
+			global $base_url;
+			// Differentiate the local install from live
+			if ($base_url == 'http://localhost/pearson1') $msg .= ' (local)';			
 			if (function_exists('twilio_send')) twilio_send($number, $msg);
 		} 
 	}
