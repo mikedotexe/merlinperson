@@ -1045,7 +1045,8 @@ function checkIQT($uidForce = FALSE){
 					$newNode->vid = $r->entity_id; // will throw notice without this line					
 					node_save($newNode);
 					// dsm($newNode, 'newnode AFTER3');
-					watchdog('pearson_mp_db', 'updating IQT');
+					watchdog('pearson_mp_db', 'updating IQT computed:' . $computedHash . '|||stored:' . $storedHash);
+					watchdog('pearson_mp_db', 'see if this is HTTP error:' . $serObj);
 					_add_hash('iqt', $guid, $computedHash, $newNode);
 				} else {
 					// dsm('hash the same');
