@@ -97,7 +97,7 @@ function twilio_menu_alter(&$callbacks) {
 
 /**
  * Implements hook_user_categories().
- */
+ 
 function twilio_user_categories() {
   return array(
     array(
@@ -107,6 +107,7 @@ function twilio_user_categories() {
     ),
   );
 }
+*/
 
 /**
  * Implements hook_permission().
