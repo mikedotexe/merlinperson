@@ -1214,7 +1214,7 @@ function updateOrAddAnnouncement($item, $cid){
  *  $type might be coursesFromTerm
  * 	$description is now being typically used as the unique drupal ID
  */
-function newHashedInfo($type, $description, &$item){
+function newHashedInfo($type, $description, $item){
 	$serialItem = serialize($item);
 	// $hash = hash("crc32b", $item);
 	$hash = hash("crc32b", $serialItem);
@@ -1237,6 +1237,11 @@ function newHashedInfo($type, $description, &$item){
 		} else {
 			// it's different, go ahead and update stuff
 			// update the hash in the database, and tell calling function that there's new stuff (TRUE)
+			if ($type == 'course' && $description == '9107578'){
+				$reshash = $result->hash;
+				watchdog('pearson_mp_db', 'result hash:' . $reshash . '|||hash =:'. $hash);
+				watchdog('pearson_mp_db', 'serialItem is ' . $serialItem);
+			}
 			watchdog('pearson_mp', 'Adding hash for ' . $type . ' ' . $description);
 			_add_hash($type, $description, $hash, $item);
 			return TRUE;
@@ -1244,7 +1249,7 @@ function newHashedInfo($type, $description, &$item){
 	}
 }
  
-function _add_hash($type, $description, $hash, &$item){
+function _add_hash($type, $description, $hash, $item){
 	// TODO: make sure this key is supposed to be at description
 	db_merge('pearson_mp_hashes')
 	  ->key(array('description' => $description))
