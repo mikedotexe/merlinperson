@@ -901,7 +901,8 @@ function checkIQT($uidForce = FALSE){
 		$q0->join('field_data_field_pearson_iqt_guid', 'g', 'c.entity_id = g.entity_id'); // joined on uid
 		$q0->fields('g', array('field_pearson_iqt_guid_value'))
 			->condition('u.field_pearson_course_users_target_id', $uidForce);
-		$r0 = $q0->execute()->fetchAll();		
+		$r0 = $q0->execute()->fetchAll();
+		// dsm($r0, '$r0');		
 		// now we have th GUIDs we want to remove fromt he hash table, so do it
 		foreach ($r0 as $guidInside) {
 			// dsm($guidInside, 'guidInside');
@@ -1062,11 +1063,15 @@ function checkIQT($uidForce = FALSE){
  * determine whether a new phone number has been added to this user profile
  */
 function _user_save_phonecheck($account){
+	// this line below is necessary. the Rule *says* this is called after a profile is updated, but it's not.
+	$account = user_save($account);
 	// dsm($account, 'account');
+	if (empty($account->field_pearson_user_phone[LANGUAGE_NONE])) return;
 	$currentPhone = $account->field_pearson_user_phone[LANGUAGE_NONE][0]['value'];
 	$variable = variable_get('uphone' . $account->uid);
 	if (empty($variable)){
 		// create a new array and add the current one as the first entry
+		// dsm('first number');
 		$numbers = array($currentPhone);
 		checkIQT($account->uid);
 	} else {
@@ -1074,11 +1079,13 @@ function _user_save_phonecheck($account){
 		// check to see if phone number is new
 		if (!in_array($currentPhone, $numbers)){
 			// new phone number
+			// dsm('new number');
 			$numbers[] = $currentPhone; // add it
 			// send all the Exams and Announcements
 			checkIQT($account->uid);
 		} else {
 			// phone number already in there
+			// dsm('already in there');
 			return;
 		}
 		
