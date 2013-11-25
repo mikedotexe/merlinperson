@@ -1214,7 +1214,7 @@ function updateOrAddAnnouncement($item, $cid){
  *  $type might be coursesFromTerm
  * 	$description is now being typically used as the unique drupal ID
  */
-function newHashedInfo($type, $description, $item){
+function newHashedInfo($type, $description, &$item){
 	$serialItem = serialize($item);
 	// $hash = hash("crc32b", $item);
 	$hash = hash("crc32b", $serialItem);
@@ -1225,7 +1225,8 @@ function newHashedInfo($type, $description, $item){
 	// TODO: this logic could probably be reduced to if(empty($result) || $result->hash != $hash), but keep it for easy debugging
 	if (empty($result)){
 		// never added to db before, add it
-		_add_hash($type, $description, $hash, $item);
+		// TODO: all the code until return TRUE has been commented out to test.
+		// _add_hash($type, $description, $hash, $item);
 		return TRUE;
 	} else {
 		// found a previous entry in db
@@ -1237,13 +1238,14 @@ function newHashedInfo($type, $description, $item){
 		} else {
 			// it's different, go ahead and update stuff
 			// update the hash in the database, and tell calling function that there's new stuff (TRUE)
-			if ($type == 'course' && $description == '9107578'){
-				$reshash = $result->hash;
-				watchdog('pearson_mp_db', 'result hash:' . $reshash . '|||hash =:'. $hash);
-				watchdog('pearson_mp_db', 'serialItem is ' . $serialItem);
-			}
-			watchdog('pearson_mp', 'Adding hash for ' . $type . ' ' . $description);
-			_add_hash($type, $description, $hash, $item);
+			// TODO: all the code until return TRUE has been commented out to test.
+			// if ($type == 'course' && $description == '9107578'){
+				// $reshash = $result->hash;
+				// watchdog('pearson_mp_db', 'result hash:' . $reshash . '|||hash =:'. $hash);
+				// watchdog('pearson_mp_db', 'serialItem is ' . $serialItem);
+			// }
+			// watchdog('pearson_mp', 'Adding hash for ' . $type . ' ' . $description);
+			// _add_hash($type, $description, $hash, $item);
 			return TRUE;
 		}
 	}
