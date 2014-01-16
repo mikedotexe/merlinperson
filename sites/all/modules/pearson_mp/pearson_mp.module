@@ -2649,7 +2649,7 @@ function _rule_iqt($node, $update = FALSE){
 	// dsm($json, 'json');
 	// return;
 	// $node = json_decode('{"title":"Quiz 8","type":"pearson_iqt","uid":1,"status":1,"comment":0,"promote":0,"moderate":0,"sticky":0,"language":"und","field_pearson_iqt_titleheading":{"und":[{"value":"Week 8"}]},"field_pearson_iqt_time":{"und":[{"value":"2014-01-19T07:00:00Z","timezone":"UTC","timezone_db":"UTC","date_type":"date"}]},"field_pearson_iqt_guid":{"und":[{"value":"0899bb77-f484-4af6-9db3-6507c8e50eba"}]},"field_pearson_iqt_pointspossible":{"und":[{"value":20}]},"field_pearson_iqt_course":{"und":[{"target_id":"227","target_type":"node"}]},"changed":1384454238,"nid":"291","vid":"291","original":{"vid":"291","uid":"1","title":"Quiz 8","log":"","status":"1","comment":"0","promote":"0","sticky":"0","vuuid":"325a3c23-3529-4222-a64c-f2404b40ca8b","nid":"291","type":"pearson_iqt","language":"und","created":"1384453712","changed":"1384453712","tnid":"0","translate":"0","uuid":"2f25bccd-0d22-4702-a626-f7fc27e59134","revision_timestamp":"1384453712","revision_uid":"1","field_pearson_iqt_course":{"und":[{"target_id":"227"}]},"field_pearson_iqt_titleheading":{"und":[{"value":"Week 8","format":null,"safe_value":"Week 8"}]},"field_pearson_iqt_time":{"und":[{"value":"2014-01-19T07:00:00Z","timezone":"UTC","timezone_db":"UTC","date_type":"date"}]},"field_pearson_iqt_guid":{"und":[{"value":"0899bb77-f484-4af6-9db3-6507c8e50eba","format":null,"safe_value":"0899bb77-f484-4af6-9db3-6507c8e50eba"}]},"field_pearson_iqt_pointspossible":{"und":[{"value":"20"}]},"rdf_mapping":{"rdftype":["sioc:Item","foaf:Document"],"title":{"predicates":["dc:title"]},"created":{"predicates":["dc:date","dc:created"],"datatype":"xsd:dateTime","callback":"date_iso8601"},"changed":{"predicates":["dc:modified"],"datatype":"xsd:dateTime","callback":"date_iso8601"},"body":{"predicates":["content:encoded"]},"uid":{"predicates":["sioc:has_creator"],"type":"rel"},"name":{"predicates":["foaf:name"]},"comment_count":{"predicates":["sioc:num_replies"],"datatype":"xsd:integer"},"last_activity":{"predicates":["sioc:last_activity_date"],"datatype":"xsd:dateTime","callback":"date_iso8601"}},"cid":0,"last_comment_timestamp":"1384453712","last_comment_name":"","last_comment_uid":"1","comment_count":0,"name":"mpurvis","picture":"1","data":"b:0;"},"is_new":false,"created":1384454238,"timestamp":1384454238,"uuid":"1f38156c-bf88-47d2-ac27-14cea015946b","vuuid":"a8bb37b2-f54e-4a82-9449-f5d7e437cfc4"}');
-	dsm($node, 'node');
+	//dsm($node, 'node');
 	
 	// $nodeObj = node_load($node->field_pearson_iqt_course->und[0]->target_id);
 	$nodeObj = node_load($node->field_pearson_iqt_course[LANGUAGE_NONE][0]['target_id']);
@@ -2761,7 +2761,6 @@ function _rule_iqt($node, $update = FALSE){
 			global $base_url;
 			// Differentiate the local install from live
 			if ($base_url == 'http://localhost/pearson1') $msg .= ' (local)';
-			watchdog('pearson_mp_last', 'message ');
 			$sentalready = variable_get('mp'.$node->nid.'-'.$number);
 			if ($sentalready != $msg){
 				if (function_exists('twilio_send')) twilio_send($number, $msg);
