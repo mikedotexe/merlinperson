@@ -1073,6 +1073,7 @@ function _user_save_phonecheck($account){
 		// create a new array and add the current one as the first entry
 		// dsm('first number');
 		$numbers = array($currentPhone);
+		variable_set('pearson_single', $account->uid);
 		checkIQT($account->uid);
 	} else {
 		$numbers = unserialize($variable);
@@ -1082,6 +1083,7 @@ function _user_save_phonecheck($account){
 			// dsm('new number');
 			$numbers[] = $currentPhone; // add it
 			// send all the Exams and Announcements
+			variable_set('pearson_single', $account->uid);
 			checkIQT($account->uid);
 		} else {
 			// phone number already in there
@@ -2678,6 +2680,12 @@ function _rule_iqt($node, $update = FALSE){
 	$numbers = array();
 	foreach ($nodeObj->field_pearson_course_users[LANGUAGE_NONE] as $key => $value) {
 		$uid = $value['target_id'];
+		$single = variable_get('pearson_single');
+		if ($single != '-1'){
+			if ($uid != $single){
+				continue;
+			}
+		}
 		$userObj = user_load($uid);
 		if (!empty($userObj->field_pearson_user_phone)){
 			// this user has entered a phone number			
@@ -2736,10 +2744,11 @@ function _rule_iqt($node, $update = FALSE){
 			global $base_url;
 			// Differentiate the local install from live
 			if ($base_url == 'http://localhost/pearson1') $msg .= ' (local)';
-			watchdog('pearson_mp_last', 'message ' . $msg);
+			watchdog('pearson_mp', 'message ' . $msg);
 			// if (function_exists('twilio_send')) twilio_send($number, $msg);
 		}
 	}
+	variable_set('pearson_single', '-1');
 }
 
 /*
