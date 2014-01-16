@@ -2736,7 +2736,7 @@ function _rule_iqt($node, $update = FALSE){
 			global $base_url;
 			// Differentiate the local install from live
 			if ($base_url == 'http://localhost/pearson1') $msg .= ' (local)';
-			dsm($msg, 'msg');
+			watchdog('pearson_mp_last', 'message ' . $msg);
 			// if (function_exists('twilio_send')) twilio_send($number, $msg);
 		}
 	}
