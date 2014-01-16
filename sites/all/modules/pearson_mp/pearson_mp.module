@@ -1075,6 +1075,7 @@ function _user_save_phonecheck($account){
 		// dsm('first number');
 		$numbers = array($currentPhone);
 		variable_set('pearson_single', $account->uid);
+		variable_set('pearson_skip', 'yes');
 		$GLOBALS['single1'] = $account->uid;
 		
 		checkIQT($account->uid);
@@ -1087,6 +1088,7 @@ function _user_save_phonecheck($account){
 			$numbers[] = $currentPhone; // add it
 			// send all the Exams and Announcements
 			variable_set('pearson_single', $account->uid);
+			variable_set('pearson_skip', 'yes');
 			$GLOBALS['single1'] = $account->uid;
 			checkIQT($account->uid);
 		} else {
@@ -2687,12 +2689,19 @@ function _rule_iqt($node, $update = FALSE){
 		
 		$uid = $value['target_id'];
 		$single = variable_get('pearson_single'); //$GLOBALS['single1']; 
+		$skip = variable_get('pearson_skip'); //$GLOBALS['single1']; 
 		drupal_set_message('single is ' . $single .' and uid is ' . $uid);
 		if ($single != 0){
 			if ($uid != $single){
 				drupal_set_message('continuing');
 				continue;
 			}
+		} else {
+			// single is 0
+			if ($skip == 'yes'){
+				variable_set('pearson_skip', 'no');
+				return;
+			} 
 		}
 		$userObj = user_load($uid);
 		if (!empty($userObj->field_pearson_user_phone)){
