@@ -2690,7 +2690,7 @@ function _rule_iqt($node, $update = FALSE){
 		drupal_set_message('single is ' . $single .' and uid is ' . $uid);
 		if ($single != 0){
 			if ($uid != $single){
-				druapl_set_message('continuing');
+				drupal_set_message('continuing');
 				continue;
 			}
 		}
