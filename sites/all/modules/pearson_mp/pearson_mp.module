@@ -2686,9 +2686,11 @@ function _rule_iqt($node, $update = FALSE){
 		}		
 		
 		$uid = $value['target_id'];
-		$single = $GLOBALS['single1']; //variable_get('pearson_single');
+		$single = variable_get('pearson_single'); //$GLOBALS['single1']; 
+		drupal_set_message('single is ' . $single .' and uid is ' . $uid);
 		if ($single != 0){
 			if ($uid != $single){
+				druapl_set_message('continuing');
 				continue;
 			}
 		}
