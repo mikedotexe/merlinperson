@@ -2672,19 +2672,21 @@ function _rule_iqt($node, $update = FALSE){
 	// dsm($text);
 	// dsm($courseCode);
 	
-	// determine if new or updated announcement
-	$msg = '';
-	if ($update){
-		$msg = 'UPDATE: Upcoming Exam for ' . $courseCode . ' on ' . $time . ' during ' . $titleHeading;
-	} else {
-		$msg = 'Upcoming Exam for ' . $courseCode . ' on ' . $time . ' during ' . $titleHeading;
-	}	
+	
 
 	// get student information, send text to all people who have entered their cell number
 	$numbers = array();
 	foreach ($nodeObj->field_pearson_course_users[LANGUAGE_NONE] as $key => $value) {
+		// determine if new or updated announcement
+		$msg = '';
+		if ($update){
+			$msg = 'Upcoming Exam for ' . $courseCode . ' on ' . $time . ' during ' . $titleHeading;
+		} else {
+			$msg = 'Upcoming Exam for ' . $courseCode . ' on ' . $time . ' during ' . $titleHeading;
+		}		
+		
 		$uid = $value['target_id'];
-		$single = variable_get('pearson_single');
+		$single = $GLOBALS['single1']; //variable_get('pearson_single');
 		if ($single != 0){
 			if ($uid != $single){
 				continue;
